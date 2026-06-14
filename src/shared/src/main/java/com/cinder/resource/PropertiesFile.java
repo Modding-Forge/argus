@@ -87,6 +87,10 @@ public final class PropertiesFile {
         int lineNumber = 0;
         while ((line = reader.readLine()) != null) {
             lineNumber++;
+            if (lineNumber == 1 && !line.isEmpty()
+                    && line.charAt(0) == '\uFEFF') {
+                line = line.substring(1);
+            }
             String trimmed = stripAsciiWhitespace(line);
             if (trimmed.isEmpty() || trimmed.charAt(0) == '#') {
                 continue;

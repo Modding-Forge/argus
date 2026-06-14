@@ -43,6 +43,10 @@ class CinderConfigLoaderTest {
                 cfg.betterGrassCrimsonNylium());
         assertEquals(CinderConfigDefaults.BETTER_GRASS_WARPED_NYLIUM,
                 cfg.betterGrassWarpedNylium());
+        assertEquals(CinderConfigDefaults.CUSTOM_ANIMATIONS_ENABLED,
+                cfg.customAnimationsEnabled());
+        assertEquals(CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE,
+                cfg.customAnimationMipmapDistance());
     }
 
     @Test
@@ -62,7 +66,9 @@ class CinderConfigLoaderTest {
                 + "cinder.better_grass.mycelium = false\n"
                 + "cinder.better_grass.podzol = false\n"
                 + "cinder.better_grass.crimson_nylium = false\n"
-                + "cinder.better_grass.warped_nylium = false\n";
+                + "cinder.better_grass.warped_nylium = false\n"
+                + "cinder.custom_animations.enabled = false\n"
+                + "cinder.custom_animations.mipmap_distance = 2\n";
         CinderConfig cfg = CinderConfigLoader.load(new StringReader(body));
         assertTrue(cfg.enabled());
         assertTrue(cfg.safeMode());
@@ -80,6 +86,8 @@ class CinderConfigLoaderTest {
         assertFalse(cfg.betterGrassPodzol());
         assertFalse(cfg.betterGrassCrimsonNylium());
         assertFalse(cfg.betterGrassWarpedNylium());
+        assertFalse(cfg.customAnimationsEnabled());
+        assertEquals(2, cfg.customAnimationMipmapDistance());
     }
 
     @Test
@@ -152,6 +160,14 @@ class CinderConfigLoaderTest {
         CinderConfig masterOff = new CinderConfig(false, false, false, true,
                 false, BetterGrassMode.FAST);
         assertFalse(masterOff.ctmActive());
+    }
+
+    @Test
+    void parse_malformedMipmapDistance_usesDefault() {
+        String body = "cinder.custom_animations.mipmap_distance = 9\n";
+        CinderConfig cfg = CinderConfigLoader.load(new StringReader(body));
+        assertEquals(CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE,
+                cfg.customAnimationMipmapDistance());
     }
 
     @Test

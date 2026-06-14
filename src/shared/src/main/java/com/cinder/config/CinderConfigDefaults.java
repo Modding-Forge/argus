@@ -23,6 +23,8 @@ package com.cinder.config;
  *       compatibility adapter disables it)</li>
  *   <li>{@code custom_gui.enabled} = true (OptiFine Custom GUI is active
  *       unless a compatibility adapter disables it)</li>
+ *   <li>{@code custom_animations.enabled} = true (OptiFine custom texture
+ *       animations are active unless a compatibility adapter disables them)</li>
  * </ul>
  *
  * <p>Performance: a single static field, allocated once.
@@ -70,6 +72,12 @@ public final class CinderConfigDefaults {
     /** Custom GUI texture replacement feature toggle. */
     public static final boolean CUSTOM_GUI_ENABLED = true;
 
+    /** Custom texture animations feature toggle. */
+    public static final boolean CUSTOM_ANIMATIONS_ENABLED = true;
+
+    /** Highest custom-animation mipmap level to update. */
+    public static final int CUSTOM_ANIMATION_MIPMAP_DISTANCE = 4;
+
     private CinderConfigDefaults() {
     }
 
@@ -92,6 +100,8 @@ public final class CinderConfigDefaults {
                 BETTER_GRASS_CRIMSON_NYLIUM,
                 BETTER_GRASS_WARPED_NYLIUM,
                 CIT_ENABLED,
-                CUSTOM_GUI_ENABLED);
+                CUSTOM_GUI_ENABLED,
+                CUSTOM_ANIMATIONS_ENABLED,
+                CUSTOM_ANIMATION_MIPMAP_DISTANCE);
     }
 }

@@ -37,6 +37,8 @@ import java.util.Objects;
  * cinder.better_grass.warped_nylium = true
  * cinder.cit.enabled = true
  * cinder.custom_gui.enabled = true
+ * cinder.custom_animations.enabled = true
+ * cinder.custom_animations.mipmap_distance = 4
  * </pre>
  *
  * <p>Performance: O(file size). Called once at config load and
@@ -123,6 +125,13 @@ public final class CinderConfigLoader {
                 CinderConfigDefaults.CIT_ENABLED);
         boolean customGuiEnabled = readBool(props, "cinder.custom_gui.enabled",
                 CinderConfigDefaults.CUSTOM_GUI_ENABLED);
+        boolean customAnimationsEnabled = readBool(props,
+                "cinder.custom_animations.enabled",
+                CinderConfigDefaults.CUSTOM_ANIMATIONS_ENABLED);
+        int customAnimationMipmapDistance = readInt(props,
+                "cinder.custom_animations.mipmap_distance",
+                CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE,
+                0, 4);
         return new CinderConfig(enabled, safeMode, verifyMode, ctmEnabled,
                 ctmDebugLogging, duplicateTranslucentBackfaces,
                 betterGrassMode,
@@ -131,7 +140,8 @@ public final class CinderConfigLoader {
                 betterGrassDirtPath,
                 betterGrassFarmland, betterGrassMycelium, betterGrassPodzol,
                 betterGrassCrimsonNylium, betterGrassWarpedNylium,
-                citEnabled, customGuiEnabled);
+                citEnabled, customGuiEnabled, customAnimationsEnabled,
+                customAnimationMipmapDistance);
     }
 
     private static boolean readBool(PropertiesFile props, String key, boolean fallback) {
@@ -147,5 +157,25 @@ public final class CinderConfigLoader {
             return false;
         }
         return fallback;
+    }
+
+    private static int readInt(PropertiesFile props,
+                               String key,
+                               int fallback,
+                               int min,
+                               int max) {
+        String v = props.get(key);
+        if (v == null) {
+            return fallback;
+        }
+        try {
+            int parsed = Integer.parseInt(v.trim());
+            if (parsed < min || parsed > max) {
+                return fallback;
+            }
+            return parsed;
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 }

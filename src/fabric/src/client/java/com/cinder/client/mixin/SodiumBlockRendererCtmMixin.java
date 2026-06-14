@@ -6,6 +6,7 @@ import com.cinder.client.sodium.CinderSodiumEmissive;
 import com.cinder.client.sodium.CinderSodiumBetterGrass;
 import com.cinder.config.CinderConfig;
 import com.cinder.config.CinderConfigHolder;
+import com.cinder.fabric.animation.CustomAnimationRuntime;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderer;
 import net.caffeinemc.mods.sodium.client.render.model.AbstractBlockRenderContext;
 import net.caffeinemc.mods.sodium.client.render.model.EncodingFormat;
@@ -83,6 +84,7 @@ public abstract class SodiumBlockRendererCtmMixin
         if (cinder$emittingOverlay) {
             return;
         }
+        CustomAnimationRuntime.markTerrainSprite(cinder$sourceSprite(quad));
         cinder$betterGrass().apply(quad, level, state, pos);
         cinder$hasOverlayPlan = cinder$processor().prepare(
                 quad, level, state, pos, cinder$overlaySource(),

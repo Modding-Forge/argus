@@ -28,6 +28,13 @@ class PropertiesFileTest {
     }
 
     @Test
+    void utf8BomOnFirstLineIsIgnored() throws IOException {
+        PropertiesFile p = PropertiesFile.parse(new StringReader(
+                "\uFEFFfrom=./stone_anim.png\n"));
+        assertEquals("./stone_anim.png", p.get("from"));
+    }
+
+    @Test
     void commentsAndBlankLines() throws IOException {
         PropertiesFile p = PropertiesFile.parse(new StringReader(
                 "# this is a comment\n"

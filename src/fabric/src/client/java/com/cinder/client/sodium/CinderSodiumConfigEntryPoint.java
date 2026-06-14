@@ -11,6 +11,7 @@ import net.caffeinemc.mods.sodium.api.config.option.OptionFlag;
 import net.caffeinemc.mods.sodium.api.config.structure.BooleanOptionBuilder;
 import net.caffeinemc.mods.sodium.api.config.structure.ConfigBuilder;
 import net.caffeinemc.mods.sodium.api.config.structure.EnumOptionBuilder;
+import net.caffeinemc.mods.sodium.api.config.structure.IntegerOptionBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -84,7 +85,32 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                                         this.storage
                                                 ::getDuplicateTranslucentBackfaces,
                                         OptionFlag
-                                                .REQUIRES_RENDERER_RELOAD))))
+                                                .REQUIRES_RENDERER_RELOAD))
+                                .addOption(booleanOption(builder,
+                                        "custom_animations_enabled",
+                                        "Enable Custom Animations",
+                                        "Tick OptiFine custom texture "
+                                                + "animations loaded from "
+                                                + "resource packs.",
+                                        CinderConfigDefaults
+                                                .CUSTOM_ANIMATIONS_ENABLED,
+                                        this.storage
+                                                ::setCustomAnimationsEnabled,
+                                        this.storage
+                                                ::getCustomAnimationsEnabled))
+                                .addOption(integerOption(builder,
+                                        "custom_animations_mipmap_distance",
+                                        "Animation Mipmap Distance",
+                                        "Controls how many mipmap distance "
+                                                + "levels Cinder updates for "
+                                                + "custom texture animations.",
+                                        CinderConfigDefaults
+                                                .CUSTOM_ANIMATION_MIPMAP_DISTANCE,
+                                        0, 4, 1,
+                                        this.storage
+                                                ::setCustomAnimationMipmapDistance,
+                                        this.storage
+                                                ::getCustomAnimationMipmapDistance))))
                 .addPage(builder.createOptionPage()
                         .setName(Component.literal("CTM"))
                         .addOptionGroup(builder.createOptionGroup()
@@ -293,6 +319,29 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                 .setFlags(flags);
     }
 
+    private IntegerOptionBuilder integerOption(ConfigBuilder builder,
+                                               String path,
+                                               String name,
+                                               String tooltip,
+                                               int defaultValue,
+                                               int min,
+                                               int max,
+                                               int step,
+                                               Consumer<Integer> setter,
+                                               Supplier<Integer> getter,
+                                               OptionFlag... flags) {
+        return builder.createIntegerOption(id(path))
+                .setName(Component.literal(name))
+                .setTooltip(Component.literal(tooltip))
+                .setStorageHandler(this.storageHandler)
+                .setBinding(setter, getter)
+                .setDefaultValue(defaultValue)
+                .setRange(min, max, step)
+                .setValueFormatter(value -> Component.literal(
+                        value == 0 ? "Near only" : "Mip " + value))
+                .setFlags(flags);
+    }
+
     private static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
@@ -353,6 +402,22 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
 
         void setCustomGuiEnabled(boolean value) {
             replace(withCustomGuiEnabled(value));
+        }
+
+        boolean getCustomAnimationsEnabled() {
+            return CinderConfigHolder.get().customAnimationsEnabled();
+        }
+
+        void setCustomAnimationsEnabled(boolean value) {
+            replace(withCustomAnimationsEnabled(value));
+        }
+
+        int getCustomAnimationMipmapDistance() {
+            return CinderConfigHolder.get().customAnimationMipmapDistance();
+        }
+
+        void setCustomAnimationMipmapDistance(int value) {
+            replace(withCustomAnimationMipmapDistance(value));
         }
 
         boolean getDuplicateTranslucentBackfaces() {
@@ -464,7 +529,7 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                     cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
                     cfg.betterGrassCrimsonNylium(),
                     cfg.betterGrassWarpedNylium(), cfg.citEnabled(),
-                    cfg.customGuiEnabled());
+                    cfg.customGuiEnabled(), cfg.customAnimationsEnabled(), cfg.customAnimationMipmapDistance());
         }
 
         private static CinderConfig withSafeMode(boolean value) {
@@ -480,7 +545,7 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                     cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
                     cfg.betterGrassCrimsonNylium(),
                     cfg.betterGrassWarpedNylium(), cfg.citEnabled(),
-                    cfg.customGuiEnabled());
+                    cfg.customGuiEnabled(), cfg.customAnimationsEnabled(), cfg.customAnimationMipmapDistance());
         }
 
         private static CinderConfig withVerifyMode(boolean value) {
@@ -496,7 +561,7 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                     cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
                     cfg.betterGrassCrimsonNylium(),
                     cfg.betterGrassWarpedNylium(), cfg.citEnabled(),
-                    cfg.customGuiEnabled());
+                    cfg.customGuiEnabled(), cfg.customAnimationsEnabled(), cfg.customAnimationMipmapDistance());
         }
 
         private static CinderConfig withCtmDebugLogging(boolean value) {
@@ -512,7 +577,7 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                     cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
                     cfg.betterGrassCrimsonNylium(),
                     cfg.betterGrassWarpedNylium(), cfg.citEnabled(),
-                    cfg.customGuiEnabled());
+                    cfg.customGuiEnabled(), cfg.customAnimationsEnabled(), cfg.customAnimationMipmapDistance());
         }
 
         private static CinderConfig withCitEnabled(boolean value) {
@@ -529,7 +594,7 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                     cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
                     cfg.betterGrassCrimsonNylium(),
                     cfg.betterGrassWarpedNylium(), value,
-                    cfg.customGuiEnabled());
+                    cfg.customGuiEnabled(), cfg.customAnimationsEnabled(), cfg.customAnimationMipmapDistance());
         }
 
         private static CinderConfig withCustomGuiEnabled(boolean value) {
@@ -545,7 +610,46 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                     cfg.betterGrassDirtPath(), cfg.betterGrassFarmland(),
                     cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
                     cfg.betterGrassCrimsonNylium(),
-                    cfg.betterGrassWarpedNylium(), cfg.citEnabled(), value);
+                    cfg.betterGrassWarpedNylium(), cfg.citEnabled(), value,
+                    cfg.customAnimationsEnabled(),
+                    cfg.customAnimationMipmapDistance());
+        }
+
+        private static CinderConfig withCustomAnimationsEnabled(
+                boolean value) {
+            CinderConfig cfg = CinderConfigHolder.get();
+            return new CinderConfig(cfg.enabled(), cfg.safeMode(),
+                    cfg.verifyMode(), cfg.ctmEnabled(),
+                    cfg.ctmDebugLogging(),
+                    cfg.duplicateTranslucentBackfaces(),
+                    cfg.betterGrassMode(),
+                    cfg.betterGrassIgnoreResourcePack(),
+                    cfg.betterGrassGrassBlock(),
+                    cfg.betterGrassSnowyGrassBlock(),
+                    cfg.betterGrassDirtPath(), cfg.betterGrassFarmland(),
+                    cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
+                    cfg.betterGrassCrimsonNylium(),
+                    cfg.betterGrassWarpedNylium(), cfg.citEnabled(),
+                    cfg.customGuiEnabled(), value, cfg.customAnimationMipmapDistance());
+        }
+
+        private static CinderConfig withCustomAnimationMipmapDistance(
+                int value) {
+            CinderConfig cfg = CinderConfigHolder.get();
+            return new CinderConfig(cfg.enabled(), cfg.safeMode(),
+                    cfg.verifyMode(), cfg.ctmEnabled(),
+                    cfg.ctmDebugLogging(),
+                    cfg.duplicateTranslucentBackfaces(),
+                    cfg.betterGrassMode(),
+                    cfg.betterGrassIgnoreResourcePack(),
+                    cfg.betterGrassGrassBlock(),
+                    cfg.betterGrassSnowyGrassBlock(),
+                    cfg.betterGrassDirtPath(), cfg.betterGrassFarmland(),
+                    cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
+                    cfg.betterGrassCrimsonNylium(),
+                    cfg.betterGrassWarpedNylium(), cfg.citEnabled(),
+                    cfg.customGuiEnabled(), cfg.customAnimationsEnabled(),
+                    value);
         }
 
         private static CinderConfig withDuplicateTranslucentBackfaces(
@@ -562,7 +666,7 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                     cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
                     cfg.betterGrassCrimsonNylium(),
                     cfg.betterGrassWarpedNylium(), cfg.citEnabled(),
-                    cfg.customGuiEnabled());
+                    cfg.customGuiEnabled(), cfg.customAnimationsEnabled(), cfg.customAnimationMipmapDistance());
         }
 
         private static CinderConfig withBetterGrassMode(
@@ -578,7 +682,7 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                     cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
                     cfg.betterGrassCrimsonNylium(),
                     cfg.betterGrassWarpedNylium(), cfg.citEnabled(),
-                    cfg.customGuiEnabled());
+                    cfg.customGuiEnabled(), cfg.customAnimationsEnabled(), cfg.customAnimationMipmapDistance());
         }
 
         private static CinderConfig withBetterGrassIgnoreResourcePack(
@@ -594,7 +698,7 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                     cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
                     cfg.betterGrassCrimsonNylium(),
                     cfg.betterGrassWarpedNylium(), cfg.citEnabled(),
-                    cfg.customGuiEnabled());
+                    cfg.customGuiEnabled(), cfg.customAnimationsEnabled(), cfg.customAnimationMipmapDistance());
         }
 
         private static CinderConfig withBetterGrassGrassBlock(boolean value) {
@@ -693,7 +797,9 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                     cfg.betterGrassIgnoreResourcePack(),
                     grassBlock, snowyGrassBlock,
                     dirtPath, farmland, mycelium, podzol, crimsonNylium,
-                    warpedNylium, cfg.citEnabled(), cfg.customGuiEnabled());
+                    warpedNylium, cfg.citEnabled(), cfg.customGuiEnabled(),
+                    cfg.customAnimationsEnabled(),
+                    cfg.customAnimationMipmapDistance());
         }
     }
 }

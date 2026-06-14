@@ -19,6 +19,7 @@ The goal is not to bundle features for the sake of size. The goal is a clean rei
 - Emissive texture support for block textures and CTM tile textures, including compact CTM border packs with `_e` tile companions.
 - Custom Item Texture support for `type=item` rules, item texture replacements, model replacements, damage, stack size, enchantment, hand, component, and legacy NBT conditions.
 - Custom GUI texture replacement support for OptiFine-style `optifine/gui/container/**/*.properties` rules, including basic screen matching and shulker `colors=` handling.
+- Custom Animations MVP for OptiFine-style `optifine/anim/**/*.properties` block-atlas texture rules.
 - Shared condition engine for CIT, Custom GUI, and future condition-based features.
 - Fabric client integration through Sodium's terrain quad path and Minecraft's item/GUI rendering paths where those features live.
 
@@ -38,10 +39,11 @@ Implemented or visible today:
   - Armor, Elytra, glint overlays, potion filename shortcuts, and broader pack parity are still planned.
 - Custom GUI is partially in-game verified. PureBDcraft shulker box GUI colors work through resource-pack rules
   - OptiGUI syntax support, broad Vanilla container testing, and a real fixture suite are still planned.
+- Custom Animations are implemented as an MVP for block-atlas texture targets, with shared parser coverage, reload snapshots, a Fabric tick runtime, partial atlas uploads including configurable mipmap distance, a Sodium terrain usage marker, and GUI item cache invalidation for animated item models.
+  - Broad pack parity, non-terrain targets, and full in-game smoke coverage are still planned.
 
 Not implemented yet:
 
-- Custom Animations.
 - Custom Colors.
 - Custom Sky.
 - Random Entities.

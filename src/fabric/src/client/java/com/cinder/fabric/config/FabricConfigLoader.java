@@ -77,7 +77,8 @@ public final class FabricConfigLoader {
                         + "betterGrassBlocks=[grass={}, snowyGrass={}, "
                         + "dirtPath={}, farmland={}, mycelium={}, podzol={}, "
                         + "crimson={}, warped={}] citEnabled={} "
-                        + "customGuiEnabled={}",
+                        + "customGuiEnabled={} customAnimationsEnabled={} "
+                        + "customAnimationMipmapDistance={}",
                 Constants.MOD_NAME, file, cfg.enabled(),
                 cfg.safeMode(), cfg.verifyMode(), cfg.ctmEnabled(),
                 cfg.ctmDebugLogging(),
@@ -90,7 +91,8 @@ public final class FabricConfigLoader {
                 cfg.betterGrassMycelium(), cfg.betterGrassPodzol(),
                 cfg.betterGrassCrimsonNylium(),
                 cfg.betterGrassWarpedNylium(), cfg.citEnabled(),
-                cfg.customGuiEnabled());
+                cfg.customGuiEnabled(), cfg.customAnimationsEnabled(),
+                cfg.customAnimationMipmapDistance());
             return cfg;
         } catch (Exception e) {
             LOGGER.warn("[{}] failed to read config from {}; "
@@ -150,6 +152,10 @@ public final class FabricConfigLoader {
                 Boolean.toString(config.citEnabled()));
         props.setProperty("cinder.custom_gui.enabled",
                 Boolean.toString(config.customGuiEnabled()));
+        props.setProperty("cinder.custom_animations.enabled",
+                Boolean.toString(config.customAnimationsEnabled()));
+        props.setProperty("cinder.custom_animations.mipmap_distance",
+                Integer.toString(config.customAnimationMipmapDistance()));
         try {
             Files.createDirectories(configDir);
             try (OutputStream out = Files.newOutputStream(file)) {

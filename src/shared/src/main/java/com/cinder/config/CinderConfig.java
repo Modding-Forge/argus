@@ -42,7 +42,9 @@ public record CinderConfig(
         boolean betterGrassCrimsonNylium,
         boolean betterGrassWarpedNylium,
         boolean citEnabled,
-        boolean customGuiEnabled) {
+        boolean customGuiEnabled,
+        boolean customAnimationsEnabled,
+        int customAnimationMipmapDistance) {
 
     public CinderConfig {
         // Defensive copies not needed: record components are
@@ -72,6 +74,13 @@ public record CinderConfig(
                 "betterGrassWarpedNylium");
         Objects.requireNonNull(citEnabled, "citEnabled");
         Objects.requireNonNull(customGuiEnabled, "customGuiEnabled");
+        Objects.requireNonNull(customAnimationsEnabled,
+                "customAnimationsEnabled");
+        if (customAnimationMipmapDistance < 0
+                || customAnimationMipmapDistance > 4) {
+            throw new IllegalArgumentException(
+                    "customAnimationMipmapDistance must be 0-4");
+        }
     }
 
     public CinderConfig(boolean enabled,
@@ -93,7 +102,9 @@ public record CinderConfig(
                 CinderConfigDefaults.BETTER_GRASS_CRIMSON_NYLIUM,
                 CinderConfigDefaults.BETTER_GRASS_WARPED_NYLIUM,
                 CinderConfigDefaults.CIT_ENABLED,
-                CinderConfigDefaults.CUSTOM_GUI_ENABLED);
+                CinderConfigDefaults.CUSTOM_GUI_ENABLED,
+                CinderConfigDefaults.CUSTOM_ANIMATIONS_ENABLED,
+                CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE);
     }
 
     public CinderConfig(boolean enabled,
@@ -120,7 +131,9 @@ public record CinderConfig(
                 betterGrassPodzol, betterGrassCrimsonNylium,
                 betterGrassWarpedNylium,
                 CinderConfigDefaults.CIT_ENABLED,
-                CinderConfigDefaults.CUSTOM_GUI_ENABLED);
+                CinderConfigDefaults.CUSTOM_GUI_ENABLED,
+                CinderConfigDefaults.CUSTOM_ANIMATIONS_ENABLED,
+                CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE);
     }
 
     public CinderConfig(boolean enabled,
@@ -146,7 +159,9 @@ public record CinderConfig(
                 betterGrassPodzol, betterGrassCrimsonNylium,
                 betterGrassWarpedNylium,
                 CinderConfigDefaults.CIT_ENABLED,
-                CinderConfigDefaults.CUSTOM_GUI_ENABLED);
+                CinderConfigDefaults.CUSTOM_GUI_ENABLED,
+                CinderConfigDefaults.CUSTOM_ANIMATIONS_ENABLED,
+                CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE);
     }
 
     public CinderConfig(boolean enabled,
@@ -173,7 +188,9 @@ public record CinderConfig(
                 betterGrassPodzol, betterGrassCrimsonNylium,
                 betterGrassWarpedNylium,
                 CinderConfigDefaults.CIT_ENABLED,
-                CinderConfigDefaults.CUSTOM_GUI_ENABLED);
+                CinderConfigDefaults.CUSTOM_GUI_ENABLED,
+                CinderConfigDefaults.CUSTOM_ANIMATIONS_ENABLED,
+                CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE);
     }
 
     /**
@@ -220,5 +237,12 @@ public record CinderConfig(
      */
     public boolean customGuiActive() {
         return enabled && customGuiEnabled;
+    }
+
+    /**
+     * Returns {@code true} when Custom Animations should tick and upload.
+     */
+    public boolean customAnimationsActive() {
+        return enabled && customAnimationsEnabled;
     }
 }

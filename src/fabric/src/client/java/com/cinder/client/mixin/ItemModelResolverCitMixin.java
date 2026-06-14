@@ -1,6 +1,7 @@
 package com.cinder.client.mixin;
 
 import com.cinder.cit.CitRule;
+import com.cinder.fabric.animation.CustomAnimationRuntime;
 import com.cinder.fabric.cit.CitRuntime;
 import com.cinder.resource.NamespaceId;
 import net.minecraft.client.Minecraft;
@@ -73,6 +74,7 @@ public abstract class ItemModelResolverCitMixin {
                 (ItemModelResolver) (Object) this, displayContext,
                 level instanceof ClientLevel clientLevel ? clientLevel : null,
                 owner, seed);
+        markCustomAnimatedTextures(output);
         ci.cancel();
     }
 
@@ -85,18 +87,17 @@ public abstract class ItemModelResolverCitMixin {
                                        int seed,
                                        CallbackInfo ci) {
         CitRule rule = CitRuntime.select(item, hand(displayContext));
-        if (rule == null || rule.replacement().texture() == null
-                || rule.replacement().model() != null) {
-            return;
+        if (rule != null && rule.replacement().texture() != null
+                && rule.replacement().model() == null) {
+            TextureAtlasSprite target = Minecraft.getInstance()
+                    .getAtlasManager()
+                    .getAtlasOrThrow(AtlasIds.ITEMS)
+                    .getSprite(id(rule.replacement().texture()));
+            if (target != null) {
+                remapOutput(output, target);
+            }
         }
-        TextureAtlasSprite target = Minecraft.getInstance()
-                .getAtlasManager()
-                .getAtlasOrThrow(AtlasIds.ITEMS)
-                .getSprite(id(rule.replacement().texture()));
-        if (target == null) {
-            return;
-        }
-        remapOutput(output, target);
+        markCustomAnimatedTextures(output);
     }
 
     private static void remapOutput(ItemStackRenderState output,
@@ -127,6 +128,23 @@ public abstract class ItemModelResolverCitMixin {
                 remapUv(quad.packedUV2(), source, target),
                 remapUv(quad.packedUV3(), source, target),
                 quad.direction(), material);
+    }
+
+    private static void markCustomAnimatedTextures(ItemStackRenderState output) {
+        ItemStackRenderStateAccessor accessor =
+                (ItemStackRenderStateAccessor) output;
+        ItemStackRenderState.LayerRenderState[] layers =
+                accessor.cinder$layers();
+        for (int i = 0; i < accessor.cinder$activeLayerCount(); i++) {
+            List<BakedQuad> quads = layers[i].prepareQuadList();
+            for (int q = 0; q < quads.size(); q++) {
+                if (CustomAnimationRuntime.animatesSprite(
+                        quads.get(q).materialInfo().sprite())) {
+                    output.setAnimated();
+                    return;
+                }
+            }
+        }
     }
 
     private static long remapUv(long packed,
