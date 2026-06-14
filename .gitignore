@@ -39,7 +39,6 @@ $tmp/
 
 # Repo specific
 plan/*
-!plan/roadmap.md
 AGENTS.md
 
 # Fabric
