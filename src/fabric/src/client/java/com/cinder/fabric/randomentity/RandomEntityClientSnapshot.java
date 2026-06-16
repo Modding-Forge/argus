@@ -5,6 +5,8 @@ import com.cinder.randomentity.RandomEntityRuleSet;
 import com.cinder.resource.NamespaceId;
 import net.minecraft.resources.Identifier;
 
+import java.util.Set;
+
 /**
  * Fabric-side immutable Random Entity texture snapshot.
  *
@@ -21,15 +23,29 @@ import net.minecraft.resources.Identifier;
  */
 public final class RandomEntityClientSnapshot {
     private static final RandomEntityClientSnapshot EMPTY =
-            new RandomEntityClientSnapshot(RandomEntityRuleSet.empty(), 0);
+            new RandomEntityClientSnapshot(RandomEntityRuleSet.empty(), 0,
+                    Set.of(), "_e");
 
     private final RandomEntityRuleSet ruleSet;
     private final int version;
+    private final Set<Identifier> knownTextures;
+    private final String emissiveSuffix;
 
     public RandomEntityClientSnapshot(RandomEntityRuleSet ruleSet,
                                       int version) {
+        this(ruleSet, version, Set.of(), "_e");
+    }
+
+    public RandomEntityClientSnapshot(RandomEntityRuleSet ruleSet,
+                                      int version,
+                                      Set<Identifier> knownTextures,
+                                      String emissiveSuffix) {
         this.ruleSet = ruleSet == null ? RandomEntityRuleSet.empty() : ruleSet;
         this.version = version;
+        this.knownTextures = knownTextures == null ? Set.of()
+                : Set.copyOf(knownTextures);
+        this.emissiveSuffix = emissiveSuffix == null || emissiveSuffix.isBlank()
+                ? "_e" : emissiveSuffix;
     }
 
     public static RandomEntityClientSnapshot empty() {
@@ -37,6 +53,10 @@ public final class RandomEntityClientSnapshot {
     }
 
     public boolean isEmpty() {
+        return ruleSet.isEmpty() && knownTextures.isEmpty();
+    }
+
+    public boolean randomRulesEmpty() {
         return ruleSet.isEmpty();
     }
 
@@ -80,5 +100,43 @@ public final class RandomEntityClientSnapshot {
         }
         return Identifier.fromNamespaceAndPath(selected.namespace(),
                 selected.path());
+    }
+
+    public Identifier remapPaintingSprite(Identifier paintingSprite,
+                                          RandomEntityContext context) {
+        if (paintingSprite == null || context == null || ruleSet.isEmpty()) {
+            return paintingSprite;
+        }
+        Identifier baseTexture = Identifier.fromNamespaceAndPath(
+                paintingSprite.getNamespace(),
+                "textures/painting/" + paintingSprite.getPath() + ".png");
+        Identifier selectedTexture = remap(baseTexture, context);
+        if (selectedTexture.equals(baseTexture)) {
+            return paintingSprite;
+        }
+        String path = selectedTexture.getPath();
+        if (path.endsWith(".png")) {
+            path = path.substring(0, path.length() - 4);
+        }
+        return Identifier.fromNamespaceAndPath(selectedTexture.getNamespace(),
+                path);
+    }
+
+    public Identifier emissiveTexture(Identifier baseTexture) {
+        if (baseTexture == null) {
+            return null;
+        }
+        Identifier emissive = suffixed(baseTexture, emissiveSuffix);
+        return knownTextures.contains(emissive) ? emissive : null;
+    }
+
+    private static Identifier suffixed(Identifier id, String suffix) {
+        String path = id.getPath();
+        if (path.endsWith(".png")) {
+            path = path.substring(0, path.length() - 4) + suffix + ".png";
+        } else {
+            path = path + suffix;
+        }
+        return Identifier.fromNamespaceAndPath(id.getNamespace(), path);
     }
 }

@@ -148,6 +148,24 @@ public final class CinderConfigLoader {
         boolean randomEntitiesEnabled = readBool(props,
                 "cinder.random_entities.enabled",
                 CinderConfigDefaults.RANDOM_ENTITIES_ENABLED);
+        boolean entityTexturesEnabled = readBool(props,
+                "cinder.entity_textures.enabled",
+                CinderConfigDefaults.ENTITY_TEXTURES_ENABLED);
+        boolean randomEntityTextures = readBool(props,
+                "cinder.entity_textures.random_entities",
+                randomEntitiesEnabled);
+        boolean randomBlockEntityTextures = readBool(props,
+                "cinder.entity_textures.random_block_entities",
+                CinderConfigDefaults.RANDOM_BLOCK_ENTITY_TEXTURES);
+        boolean entityEmissiveTextures = readBool(props,
+                "cinder.entity_textures.emissive_entities",
+                CinderConfigDefaults.ENTITY_EMISSIVE_TEXTURES);
+        boolean blockEntityEmissiveTextures = readBool(props,
+                "cinder.entity_textures.emissive_block_entities",
+                CinderConfigDefaults.BLOCK_ENTITY_EMISSIVE_TEXTURES);
+        boolean entityTextureDebug = readBool(props,
+                "cinder.entity_textures.debug",
+                CinderConfigDefaults.ENTITY_TEXTURE_DEBUG);
         boolean customEntityModelsEnabled = readBool(props,
                 "cinder.custom_entity_models.enabled",
                 CinderConfigDefaults.CUSTOM_ENTITY_MODELS_ENABLED);
@@ -341,7 +359,12 @@ public final class CinderConfigLoader {
                 naturalTexturesEnabled,
                 betterSnowEnabled,
                 customAnimationsEnabled,
-                randomEntitiesEnabled,
+                randomEntityTextures,
+                entityTexturesEnabled,
+                randomBlockEntityTextures,
+                entityEmissiveTextures,
+                blockEntityEmissiveTextures,
+                entityTextureDebug,
                 customEntityModelsEnabled,
                 customAnimationMipmapDistance,
                 detailsSkyEnabled,

@@ -1,0 +1,12 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:directory",
+      "prefix": "",
+      "source": "painting"
+    },
+    {
+      "type": "cinder:random_paintings"
+    }
+  ]
+}

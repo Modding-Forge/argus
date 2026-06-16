@@ -1,6 +1,7 @@
 package com.cinder.fabric.randomentity;
 
 import com.cinder.Constants;
+import com.cinder.emissive.EmissiveProperties;
 import com.cinder.randomentity.RandomEntityRuleParser;
 import com.cinder.randomentity.RandomEntityRuleSet;
 import com.cinder.randomentity.RandomEntityVariant;
@@ -21,16 +22,18 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
  * Fabric resource reload bridge for Random Entity texture rules.
  *
- * <p>Purpose: scans active packs for OptiFine/ETF-compatible random entity
+ * <p>Purpose: scans active packs for OptiFine-compatible random entity
  * resources, delegates parsing to shared code, and publishes an immutable
  * client snapshot atomically.
  *
@@ -43,6 +46,12 @@ public final class RandomEntityReloadListener
             LoggerFactory.getLogger(Constants.MOD_ID + "/random-entities");
     private static final String OPTIFINE_RANDOM = "optifine/random";
     private static final String OPTIFINE_MOB = "optifine/mob";
+    private static final Identifier[] EMISSIVE_PROPERTIES = {
+            Identifier.fromNamespaceAndPath("minecraft",
+                    "optifine/emissive.properties"),
+            Identifier.fromNamespaceAndPath("minecraft",
+                    "textures/emissive.properties")
+    };
 
     public static final Identifier ID =
             Identifier.fromNamespaceAndPath(Constants.MOD_ID,
@@ -75,10 +84,12 @@ public final class RandomEntityReloadListener
                         reloadExecutor);
     }
 
-    private static RandomEntityRuleSet load(ResourceManager manager) {
+    private static LoadedRandomEntities load(ResourceManager manager) {
         Map<NamespaceId, Group> groups = new HashMap<>();
         collect(manager, OPTIFINE_RANDOM, groups);
         collect(manager, OPTIFINE_MOB, groups);
+        Set<Identifier> textures = collectTextures(manager);
+        String emissiveSuffix = emissiveSuffix(manager);
 
         RandomEntityRuleSet.Builder builder = new RandomEntityRuleSet.Builder();
         int propertyFiles = 0;
@@ -122,10 +133,10 @@ public final class RandomEntityReloadListener
         }
         RandomEntityRuleSet rules = builder.build();
         LOGGER.info("[{}] Random Entities reload: {} texture groups, {} "
-                        + "property files, {} errors",
+                        + "property files, {} known textures, {} errors",
                 Constants.MOD_NAME, rules.entries().size(), propertyFiles,
-                errors);
-        return rules;
+                textures.size(), errors);
+        return new LoadedRandomEntities(rules, textures, emissiveSuffix);
     }
 
     private static void collect(ResourceManager manager,
@@ -149,18 +160,55 @@ public final class RandomEntityReloadListener
         }
     }
 
-    private static void publish(RandomEntityRuleSet rules) {
-        RandomEntityRuntime.replace(new RandomEntityClientSnapshot(rules,
-                RandomEntityRuntime.nextVersion()));
+    private static Set<Identifier> collectTextures(ResourceManager manager) {
+        Set<Identifier> out = new HashSet<>();
+        out.addAll(manager.listResources("textures",
+                id -> id.getPath().endsWith(".png")).keySet());
+        out.addAll(manager.listResources(OPTIFINE_RANDOM,
+                id -> id.getPath().endsWith(".png")).keySet());
+        out.addAll(manager.listResources(OPTIFINE_MOB,
+                id -> id.getPath().endsWith(".png")).keySet());
+        return out;
+    }
+
+    private static String emissiveSuffix(ResourceManager manager) {
+        for (Identifier id : EMISSIVE_PROPERTIES) {
+            Optional<Resource> resource = manager.getResource(id);
+            if (resource.isEmpty()) {
+                continue;
+            }
+            try (var in = resource.get().open();
+                 var reader = new InputStreamReader(in,
+                         StandardCharsets.UTF_8)) {
+                return EmissiveProperties.parse(reader).suffix();
+            } catch (Exception e) {
+                LOGGER.warn("[{}] failed to parse entity emissive settings "
+                                + "{}: {}",
+                        Constants.MOD_NAME, id, e.getMessage());
+            }
+        }
+        return "_e";
+    }
+
+    private static void publish(LoadedRandomEntities loaded) {
+        RandomEntityRuntime.replace(new RandomEntityClientSnapshot(
+                loaded.rules, RandomEntityRuntime.nextVersion(),
+                loaded.textures, loaded.emissiveSuffix));
         if (FabricLoader.getInstance().isModLoaded("entity_texture_features")) {
-            LOGGER.warn("[{}] ETF detected; Random Entities snapshot was "
+            LOGGER.warn("[{}] ETF detected; Entity Texture snapshot was "
                             + "loaded but runtime selection is disabled",
                     Constants.MOD_NAME);
         }
-        LOGGER.info("[{}] Random Entities snapshot installed: {} groups, "
-                        + "active={}",
-                Constants.MOD_NAME, rules.entries().size(),
-                !rules.isEmpty());
+        LOGGER.info("[{}] Entity Texture snapshot installed: {} random "
+                        + "groups, {} known textures, active={}",
+                Constants.MOD_NAME, loaded.rules.entries().size(),
+                loaded.textures.size(),
+                !loaded.rules.isEmpty() || !loaded.textures.isEmpty());
+    }
+
+    private record LoadedRandomEntities(RandomEntityRuleSet rules,
+                                        Set<Identifier> textures,
+                                        String emissiveSuffix) {
     }
 
     private static final class Group {

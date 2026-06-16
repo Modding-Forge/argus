@@ -49,6 +49,11 @@ public record CinderConfig(
         boolean betterSnowEnabled,
         boolean customAnimationsEnabled,
         boolean randomEntitiesEnabled,
+        boolean entityTexturesEnabled,
+        boolean randomBlockEntityTextures,
+        boolean entityEmissiveTextures,
+        boolean blockEntityEmissiveTextures,
+        boolean entityTextureDebug,
         boolean customEntityModelsEnabled,
         int customAnimationMipmapDistance,
         boolean detailsSkyEnabled,
@@ -146,6 +151,16 @@ public record CinderConfig(
                 "customAnimationsEnabled");
         Objects.requireNonNull(randomEntitiesEnabled,
                 "randomEntitiesEnabled");
+        Objects.requireNonNull(entityTexturesEnabled,
+                "entityTexturesEnabled");
+        Objects.requireNonNull(randomBlockEntityTextures,
+                "randomBlockEntityTextures");
+        Objects.requireNonNull(entityEmissiveTextures,
+                "entityEmissiveTextures");
+        Objects.requireNonNull(blockEntityEmissiveTextures,
+                "blockEntityEmissiveTextures");
+        Objects.requireNonNull(entityTextureDebug,
+                "entityTextureDebug");
         Objects.requireNonNull(customEntityModelsEnabled,
                 "customEntityModelsEnabled");
         if (customAnimationMipmapDistance < 0
@@ -193,6 +208,11 @@ public record CinderConfig(
                 CinderConfigDefaults.BETTER_SNOW_ENABLED,
                 CinderConfigDefaults.CUSTOM_ANIMATIONS_ENABLED,
                 CinderConfigDefaults.RANDOM_ENTITIES_ENABLED,
+                CinderConfigDefaults.ENTITY_TEXTURES_ENABLED,
+                CinderConfigDefaults.RANDOM_BLOCK_ENTITY_TEXTURES,
+                CinderConfigDefaults.ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.BLOCK_ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.ENTITY_TEXTURE_DEBUG,
                 CinderConfigDefaults.CUSTOM_ENTITY_MODELS_ENABLED,
                 CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE,
                 CinderConfigDefaults.DETAILS_SKY_ENABLED,
@@ -285,6 +305,11 @@ public record CinderConfig(
                 CinderConfigDefaults.BETTER_SNOW_ENABLED,
                 CinderConfigDefaults.CUSTOM_ANIMATIONS_ENABLED,
                 CinderConfigDefaults.RANDOM_ENTITIES_ENABLED,
+                CinderConfigDefaults.ENTITY_TEXTURES_ENABLED,
+                CinderConfigDefaults.RANDOM_BLOCK_ENTITY_TEXTURES,
+                CinderConfigDefaults.ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.BLOCK_ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.ENTITY_TEXTURE_DEBUG,
                 CinderConfigDefaults.CUSTOM_ENTITY_MODELS_ENABLED,
                 CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE,
                 CinderConfigDefaults.DETAILS_SKY_ENABLED,
@@ -376,6 +401,11 @@ public record CinderConfig(
                 CinderConfigDefaults.BETTER_SNOW_ENABLED,
                 CinderConfigDefaults.CUSTOM_ANIMATIONS_ENABLED,
                 CinderConfigDefaults.RANDOM_ENTITIES_ENABLED,
+                CinderConfigDefaults.ENTITY_TEXTURES_ENABLED,
+                CinderConfigDefaults.RANDOM_BLOCK_ENTITY_TEXTURES,
+                CinderConfigDefaults.ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.BLOCK_ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.ENTITY_TEXTURE_DEBUG,
                 CinderConfigDefaults.CUSTOM_ENTITY_MODELS_ENABLED,
                 CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE,
                 CinderConfigDefaults.DETAILS_SKY_ENABLED,
@@ -468,6 +498,11 @@ public record CinderConfig(
                 CinderConfigDefaults.BETTER_SNOW_ENABLED,
                 CinderConfigDefaults.CUSTOM_ANIMATIONS_ENABLED,
                 CinderConfigDefaults.RANDOM_ENTITIES_ENABLED,
+                CinderConfigDefaults.ENTITY_TEXTURES_ENABLED,
+                CinderConfigDefaults.RANDOM_BLOCK_ENTITY_TEXTURES,
+                CinderConfigDefaults.ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.BLOCK_ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.ENTITY_TEXTURE_DEBUG,
                 CinderConfigDefaults.CUSTOM_ENTITY_MODELS_ENABLED,
                 CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE,
                 CinderConfigDefaults.DETAILS_SKY_ENABLED,
@@ -562,6 +597,11 @@ public record CinderConfig(
                 CinderConfigDefaults.BETTER_SNOW_ENABLED,
                 customAnimationsEnabled,
                 CinderConfigDefaults.RANDOM_ENTITIES_ENABLED,
+                CinderConfigDefaults.ENTITY_TEXTURES_ENABLED,
+                CinderConfigDefaults.RANDOM_BLOCK_ENTITY_TEXTURES,
+                CinderConfigDefaults.ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.BLOCK_ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.ENTITY_TEXTURE_DEBUG,
                 CinderConfigDefaults.CUSTOM_ENTITY_MODELS_ENABLED,
                 customAnimationMipmapDistance,
                 CinderConfigDefaults.DETAILS_SKY_ENABLED,
@@ -657,6 +697,11 @@ public record CinderConfig(
                 CinderConfigDefaults.BETTER_SNOW_ENABLED,
                 customAnimationsEnabled,
                 CinderConfigDefaults.RANDOM_ENTITIES_ENABLED,
+                CinderConfigDefaults.ENTITY_TEXTURES_ENABLED,
+                CinderConfigDefaults.RANDOM_BLOCK_ENTITY_TEXTURES,
+                CinderConfigDefaults.ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.BLOCK_ENTITY_EMISSIVE_TEXTURES,
+                CinderConfigDefaults.ENTITY_TEXTURE_DEBUG,
                 CinderConfigDefaults.CUSTOM_ENTITY_MODELS_ENABLED,
                 customAnimationMipmapDistance,
                 CinderConfigDefaults.DETAILS_SKY_ENABLED,
@@ -817,7 +862,29 @@ public record CinderConfig(
      * Returns {@code true} when Random Entity Textures should run.
      */
     public boolean randomEntitiesActive() {
-        return enabled && randomEntitiesEnabled;
+        return entityTextureFeaturesActive() && randomEntitiesEnabled;
+    }
+
+    /**
+     * Returns {@code true} when Cinder's OptiFine-style entity texture
+     * features may run.
+     */
+    public boolean entityTextureFeaturesActive() {
+        return enabled && entityTexturesEnabled;
+    }
+
+    /**
+     * Returns {@code true} when random BlockEntity texture rules may run.
+     */
+    public boolean randomBlockEntityTexturesActive() {
+        return entityTextureFeaturesActive() && randomBlockEntityTextures;
+    }
+
+    /**
+     * Returns {@code true} when entity emissive overlays may render.
+     */
+    public boolean entityEmissiveTexturesActive() {
+        return entityTextureFeaturesActive() && entityEmissiveTextures;
     }
 
     /**
@@ -874,6 +941,11 @@ public record CinderConfig(
         private boolean betterSnowEnabled;
         private boolean customAnimationsEnabled;
         private boolean randomEntitiesEnabled;
+        private boolean entityTexturesEnabled;
+        private boolean randomBlockEntityTextures;
+        private boolean entityEmissiveTextures;
+        private boolean blockEntityEmissiveTextures;
+        private boolean entityTextureDebug;
         private boolean customEntityModelsEnabled;
         private int customAnimationMipmapDistance;
         private boolean detailsSkyEnabled;
@@ -962,6 +1034,12 @@ public record CinderConfig(
             this.betterSnowEnabled = config.betterSnowEnabled;
             this.customAnimationsEnabled = config.customAnimationsEnabled;
             this.randomEntitiesEnabled = config.randomEntitiesEnabled;
+            this.entityTexturesEnabled = config.entityTexturesEnabled;
+            this.randomBlockEntityTextures = config.randomBlockEntityTextures;
+            this.entityEmissiveTextures = config.entityEmissiveTextures;
+            this.blockEntityEmissiveTextures =
+                    config.blockEntityEmissiveTextures;
+            this.entityTextureDebug = config.entityTextureDebug;
             this.customEntityModelsEnabled = config.customEntityModelsEnabled;
             this.customAnimationMipmapDistance =
                     config.customAnimationMipmapDistance;
@@ -1051,6 +1129,11 @@ public record CinderConfig(
         public Builder betterSnowEnabled(boolean value) { this.betterSnowEnabled = value; return this; }
         public Builder customAnimationsEnabled(boolean value) { this.customAnimationsEnabled = value; return this; }
         public Builder randomEntitiesEnabled(boolean value) { this.randomEntitiesEnabled = value; return this; }
+        public Builder entityTexturesEnabled(boolean value) { this.entityTexturesEnabled = value; return this; }
+        public Builder randomBlockEntityTextures(boolean value) { this.randomBlockEntityTextures = value; return this; }
+        public Builder entityEmissiveTextures(boolean value) { this.entityEmissiveTextures = value; return this; }
+        public Builder blockEntityEmissiveTextures(boolean value) { this.blockEntityEmissiveTextures = value; return this; }
+        public Builder entityTextureDebug(boolean value) { this.entityTextureDebug = value; return this; }
         public Builder customEntityModelsEnabled(boolean value) { this.customEntityModelsEnabled = value; return this; }
         public Builder customAnimationMipmapDistance(int value) { this.customAnimationMipmapDistance = value; return this; }
         public Builder detailsSkyEnabled(boolean value) { this.detailsSkyEnabled = value; return this; }
@@ -1123,6 +1206,9 @@ public record CinderConfig(
                     customColorsEnabled, customSkyEnabled,
                     naturalTexturesEnabled, betterSnowEnabled,
                     customAnimationsEnabled, randomEntitiesEnabled,
+                    entityTexturesEnabled, randomBlockEntityTextures,
+                    entityEmissiveTextures, blockEntityEmissiveTextures,
+                    entityTextureDebug,
                     customEntityModelsEnabled, customAnimationMipmapDistance,
                     detailsSkyEnabled, detailsSunEnabled, detailsMoonEnabled,
                     detailsStarsEnabled, detailsCloudsEnabled,

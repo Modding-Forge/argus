@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -40,9 +41,10 @@ public final class RandomEntityRuleParser {
                     textures,
                     weights,
                     parseIds(properties.get("biomes." + index)),
-                    parseRange(properties.get("heights." + index)),
+                    parseHeight(properties, index),
                     parseMatcher(properties.get("name." + index)),
                     parseStrings(properties.get("professions." + index)),
+                    parseRange(properties.get("levels." + index)),
                     parseStrings(first(properties, "colors." + index,
                             "collarColors." + index)),
                     parseBoolean(properties.get("baby." + index)),
@@ -53,6 +55,7 @@ public final class RandomEntityRuleParser {
                     parseStrings(properties.get("weather." + index)),
                     parseRange(properties.get("sizes." + index)),
                     parseIds(properties.get("blocks." + index)),
+                    parseNbt(properties, index),
                     OptifinePropertyParsers.parseIntOrDefault(
                             properties.get("seedOffset." + index), 0,
                             Integer.MIN_VALUE, Integer.MAX_VALUE),
@@ -191,6 +194,25 @@ public final class RandomEntityRuleParser {
         return RangeListInt.parse(raw.replace("%", ""));
     }
 
+    private static RangeListInt parseHeight(PropertiesFile properties,
+                                            int index) {
+        RangeListInt heights = parseRange(properties.get("heights." + index));
+        if (heights != null) {
+            return heights;
+        }
+        String min = properties.get("minHeight." + index);
+        String max = properties.get("maxHeight." + index);
+        if ((min == null || min.isBlank()) && (max == null || max.isBlank())) {
+            return null;
+        }
+        int minValue = min == null || min.isBlank()
+                ? Integer.MIN_VALUE : Integer.parseInt(min.trim());
+        int maxValue = max == null || max.isBlank()
+                ? Integer.MAX_VALUE : Integer.parseInt(max.trim());
+        return RangeListInt.parse(rangeToken(minValue) + "-"
+                + rangeToken(maxValue));
+    }
+
     private static RangeListInt parseHealth(String raw) {
         return parseRange(raw);
     }
@@ -230,5 +252,24 @@ public final class RandomEntityRuleParser {
             out.add(NamespaceId.parse(token));
         }
         return out;
+    }
+
+    private static Map<String, ComponentMatchers.Compiled> parseNbt(
+            PropertiesFile properties,
+            int index) {
+        String prefix = "nbt." + index + ".";
+        Map<String, ComponentMatchers.Compiled> out = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : properties.entries().entrySet()) {
+            if (entry.getKey().startsWith(prefix)
+                    && entry.getKey().length() > prefix.length()) {
+                out.put(entry.getKey().substring(prefix.length()),
+                        ComponentMatchers.parse(entry.getValue()));
+            }
+        }
+        return out;
+    }
+
+    private static String rangeToken(int value) {
+        return value < 0 ? "(" + value + ")" : Integer.toString(value);
     }
 }

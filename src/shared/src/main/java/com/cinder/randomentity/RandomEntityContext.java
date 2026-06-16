@@ -2,6 +2,8 @@ package com.cinder.randomentity;
 
 import com.cinder.resource.NamespaceId;
 
+import java.util.Map;
+
 /**
  * Loader-neutral facts used to evaluate Random Entity rules.
  *
@@ -29,11 +31,20 @@ public record RandomEntityContext(
         int dayTime,
         String weather,
         int size,
-        NamespaceId block) {
+        NamespaceId block,
+        Map<String, String> nbt,
+        Map<String, String> blockProperties) {
+
+    public RandomEntityContext {
+        nbt = nbt == null ? Map.of() : Map.copyOf(nbt);
+        blockProperties = blockProperties == null ? Map.of()
+                : Map.copyOf(blockProperties);
+    }
 
     /** Empty context used by unit tests and fallback renderer paths. */
     public static RandomEntityContext empty(long seed) {
         return new RandomEntityContext(seed, seed, null, -1, null, null, -1,
-                null, false, -1, -1, -1, -1, null, -1, null);
+                null, false, -1, -1, -1, -1, null, -1, null,
+                Map.of(), Map.of());
     }
 }

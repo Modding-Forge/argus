@@ -151,6 +151,18 @@ public final class FabricConfigLoader {
                 Boolean.toString(config.customAnimationsEnabled()));
         props.setProperty("cinder.random_entities.enabled",
                 Boolean.toString(config.randomEntitiesEnabled()));
+        props.setProperty("cinder.entity_textures.enabled",
+                Boolean.toString(config.entityTexturesEnabled()));
+        props.setProperty("cinder.entity_textures.random_entities",
+                Boolean.toString(config.randomEntitiesEnabled()));
+        props.setProperty("cinder.entity_textures.random_block_entities",
+                Boolean.toString(config.randomBlockEntityTextures()));
+        props.setProperty("cinder.entity_textures.emissive_entities",
+                Boolean.toString(config.entityEmissiveTextures()));
+        props.setProperty("cinder.entity_textures.emissive_block_entities",
+                Boolean.toString(config.blockEntityEmissiveTextures()));
+        props.setProperty("cinder.entity_textures.debug",
+                Boolean.toString(config.entityTextureDebug()));
         props.setProperty("cinder.custom_entity_models.enabled",
                 Boolean.toString(config.customEntityModelsEnabled()));
         props.setProperty("cinder.custom_animations.mipmap_distance",

@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
  * Target: {@link LivingEntityRenderer#getRenderType}.
  *
  * <p>Purpose: remap the base living-entity texture selected by vanilla to an
- * OptiFine/ETF-style Random Entity variant.
+ * OptiFine-style Random Entity variant.
  *
  * <p>Preserved behavior: vanilla still chooses visibility, translucency,
  * outline, model render type, lighting, and state submission. Cinder changes

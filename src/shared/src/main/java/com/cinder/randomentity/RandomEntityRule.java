@@ -6,6 +6,7 @@ import com.cinder.resource.RangeListInt;
 import com.cinder.resource.WeightedSelector;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -21,6 +22,7 @@ public final class RandomEntityRule {
     private final RangeListInt heights;
     private final ComponentMatchers.Compiled name;
     private final Set<String> professions;
+    private final RangeListInt professionLevels;
     private final Set<String> colors;
     private final Boolean baby;
     private final RangeListInt health;
@@ -30,6 +32,7 @@ public final class RandomEntityRule {
     private final Set<String> weather;
     private final RangeListInt sizes;
     private final Set<NamespaceId> blocks;
+    private final Map<String, ComponentMatchers.Compiled> nbtMatchers;
     private final int seedOffset;
     private final boolean seedSourceVehicle;
 
@@ -39,6 +42,7 @@ public final class RandomEntityRule {
                             RangeListInt heights,
                             ComponentMatchers.Compiled name,
                             Set<String> professions,
+                            RangeListInt professionLevels,
                             Set<String> colors,
                             Boolean baby,
                             RangeListInt health,
@@ -48,6 +52,7 @@ public final class RandomEntityRule {
                             Set<String> weather,
                             RangeListInt sizes,
                             Set<NamespaceId> blocks,
+                            Map<String, ComponentMatchers.Compiled> nbtMatchers,
                             int seedOffset,
                             boolean seedSourceVehicle) {
         if (textureIndices == null || textureIndices.length == 0) {
@@ -60,6 +65,7 @@ public final class RandomEntityRule {
         this.heights = heights;
         this.name = name;
         this.professions = professions == null ? Set.of() : Set.copyOf(professions);
+        this.professionLevels = professionLevels;
         this.colors = colors == null ? Set.of() : Set.copyOf(colors);
         this.baby = baby;
         this.health = health;
@@ -69,6 +75,8 @@ public final class RandomEntityRule {
         this.weather = weather == null ? Set.of() : Set.copyOf(weather);
         this.sizes = sizes;
         this.blocks = blocks == null ? Set.of() : Set.copyOf(blocks);
+        this.nbtMatchers = nbtMatchers == null ? Map.of()
+                : Map.copyOf(nbtMatchers);
         this.seedOffset = seedOffset;
         this.seedSourceVehicle = seedSourceVehicle;
     }
@@ -93,7 +101,7 @@ public final class RandomEntityRule {
             return false;
         }
         if (!professions.isEmpty() && (context.profession() == null
-                || !professions.contains(context.profession()))) {
+                || !matchesProfession(context))) {
             return false;
         }
         if (!colors.isEmpty() && (context.color() == null
@@ -124,12 +132,56 @@ public final class RandomEntityRule {
         if (sizes != null && !sizes.contains(context.size())) {
             return false;
         }
-        return blocks.isEmpty() || context.block() != null
-                && blocks.contains(context.block());
+        if (!blocks.isEmpty() && (context.block() == null
+                || !blocks.contains(context.block()))) {
+            return false;
+        }
+        if (!nbtMatchers.isEmpty()) {
+            for (Map.Entry<String, ComponentMatchers.Compiled> entry
+                    : nbtMatchers.entrySet()) {
+                String value = context.nbt().get(entry.getKey());
+                if (!entry.getValue().matches(value, value != null)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public int[] textureIndices() {
         return textureIndices.clone();
+    }
+
+    private boolean matchesProfession(RandomEntityContext context) {
+        String profession = context.profession();
+        if (profession == null) {
+            return false;
+        }
+        for (String accepted : professions) {
+            int levelSep = accepted.indexOf(':');
+            if (levelSep > 0 && levelSep + 1 < accepted.length()) {
+                String acceptedProfession = accepted.substring(0, levelSep);
+                if (!acceptedProfession.equals(profession)) {
+                    continue;
+                }
+                try {
+                    if (Integer.parseInt(accepted.substring(levelSep + 1))
+                            == context.professionLevel()) {
+                        return true;
+                    }
+                } catch (NumberFormatException ignored) {
+                    if (accepted.equals(profession)) {
+                        return professionLevels == null
+                                || professionLevels.contains(
+                                context.professionLevel());
+                    }
+                }
+            } else if (accepted.equals(profession)) {
+                return professionLevels == null
+                        || professionLevels.contains(context.professionLevel());
+            }
+        }
+        return false;
     }
 
     private static int[] normalizeWeights(int[] weights, int count) {

@@ -49,6 +49,14 @@ class CinderConfigLoaderTest {
                 cfg.betterSnowEnabled());
         assertEquals(CinderConfigDefaults.CUSTOM_ANIMATIONS_ENABLED,
                 cfg.customAnimationsEnabled());
+        assertEquals(CinderConfigDefaults.ENTITY_TEXTURES_ENABLED,
+                cfg.entityTexturesEnabled());
+        assertEquals(CinderConfigDefaults.RANDOM_BLOCK_ENTITY_TEXTURES,
+                cfg.randomBlockEntityTextures());
+        assertEquals(CinderConfigDefaults.ENTITY_EMISSIVE_TEXTURES,
+                cfg.entityEmissiveTextures());
+        assertEquals(CinderConfigDefaults.BLOCK_ENTITY_EMISSIVE_TEXTURES,
+                cfg.blockEntityEmissiveTextures());
         assertEquals(CinderConfigDefaults.CUSTOM_ANIMATION_MIPMAP_DISTANCE,
                 cfg.customAnimationMipmapDistance());
         assertEquals(CinderConfigDefaults.DETAILS_SKY_ENABLED,
@@ -143,6 +151,12 @@ class CinderConfigLoaderTest {
                 + "cinder.natural_textures.enabled = false\n"
                 + "cinder.better_snow.enabled = false\n"
                 + "cinder.custom_animations.enabled = false\n"
+                + "cinder.entity_textures.enabled = false\n"
+                + "cinder.entity_textures.random_entities = false\n"
+                + "cinder.entity_textures.random_block_entities = false\n"
+                + "cinder.entity_textures.emissive_entities = false\n"
+                + "cinder.entity_textures.emissive_block_entities = false\n"
+                + "cinder.entity_textures.debug = true\n"
                 + "cinder.custom_animations.mipmap_distance = 2\n"
                 + "cinder.details.sky.enabled = false\n"
                 + "cinder.details.cloud_height = 240\n"
@@ -207,6 +221,12 @@ class CinderConfigLoaderTest {
         assertFalse(cfg.naturalTexturesEnabled());
         assertFalse(cfg.betterSnowEnabled());
         assertFalse(cfg.customAnimationsEnabled());
+        assertFalse(cfg.entityTexturesEnabled());
+        assertFalse(cfg.randomEntitiesEnabled());
+        assertFalse(cfg.randomBlockEntityTextures());
+        assertFalse(cfg.entityEmissiveTextures());
+        assertFalse(cfg.blockEntityEmissiveTextures());
+        assertTrue(cfg.entityTextureDebug());
         assertEquals(2, cfg.customAnimationMipmapDistance());
         assertFalse(cfg.detailsSkyEnabled());
         assertEquals(240, cfg.detailsCloudHeight());
@@ -346,11 +366,13 @@ class CinderConfigLoaderTest {
         CinderConfig base = CinderConfigDefaults.defaults();
         CinderConfig changed = base.toBuilder()
                 .detailsSkyEnabled(false)
+                .entityTexturesEnabled(false)
                 .animationWater(false)
                 .particleFirework(false)
                 .overlayCorner(OverlayCorner.BOTTOM_LEFT)
                 .build();
         assertFalse(changed.detailsSkyEnabled());
+        assertFalse(changed.entityTexturesEnabled());
         assertFalse(changed.animationWater());
         assertFalse(changed.particleFirework());
         assertEquals(OverlayCorner.BOTTOM_LEFT, changed.overlayCorner());
@@ -358,6 +380,20 @@ class CinderConfigLoaderTest {
         assertEquals(base.betterGrassMode(), changed.betterGrassMode());
         assertEquals(base.customAnimationMipmapDistance(),
                 changed.customAnimationMipmapDistance());
+    }
+
+    @Test
+    void randomEntitiesActive_requiresEntityTextureMaster() {
+        CinderConfig disabled = CinderConfigDefaults.defaults().toBuilder()
+                .entityTexturesEnabled(false)
+                .randomEntitiesEnabled(true)
+                .build();
+        assertFalse(disabled.randomEntitiesActive());
+        CinderConfig enabled = CinderConfigDefaults.defaults().toBuilder()
+                .entityTexturesEnabled(true)
+                .randomEntitiesEnabled(true)
+                .build();
+        assertTrue(enabled.randomEntitiesActive());
     }
 
     @Test

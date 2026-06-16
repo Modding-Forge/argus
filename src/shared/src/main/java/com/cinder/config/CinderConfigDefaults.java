@@ -98,6 +98,13 @@ public final class CinderConfigDefaults {
     /** Random Entity Textures feature toggle. */
     public static final boolean RANDOM_ENTITIES_ENABLED = true;
 
+    /** OptiFine-style entity texture feature toggles. */
+    public static final boolean ENTITY_TEXTURES_ENABLED = true;
+    public static final boolean RANDOM_BLOCK_ENTITY_TEXTURES = true;
+    public static final boolean ENTITY_EMISSIVE_TEXTURES = true;
+    public static final boolean BLOCK_ENTITY_EMISSIVE_TEXTURES = true;
+    public static final boolean ENTITY_TEXTURE_DEBUG = false;
+
     /** Custom Entity Models feature toggle. */
     public static final boolean CUSTOM_ENTITY_MODELS_ENABLED = true;
 
@@ -197,6 +204,11 @@ public final class CinderConfigDefaults {
                 BETTER_SNOW_ENABLED,
                 CUSTOM_ANIMATIONS_ENABLED,
                 RANDOM_ENTITIES_ENABLED,
+                ENTITY_TEXTURES_ENABLED,
+                RANDOM_BLOCK_ENTITY_TEXTURES,
+                ENTITY_EMISSIVE_TEXTURES,
+                BLOCK_ENTITY_EMISSIVE_TEXTURES,
+                ENTITY_TEXTURE_DEBUG,
                 CUSTOM_ENTITY_MODELS_ENABLED,
                 CUSTOM_ANIMATION_MIPMAP_DISTANCE,
                 DETAILS_SKY_ENABLED,

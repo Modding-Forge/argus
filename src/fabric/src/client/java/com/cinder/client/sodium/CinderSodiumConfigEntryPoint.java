@@ -150,17 +150,6 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                                         this.storage
                                                 ::getCustomAnimationsEnabled))
                                 .addOption(booleanOption(builder,
-                                        "random_entities_enabled",
-                                        "Random Entities",
-                                        "Apply OptiFine/ETF-style random "
-                                                + "entity texture variants.",
-                                        CinderConfigDefaults
-                                                .RANDOM_ENTITIES_ENABLED,
-                                        this.storage
-                                                ::setRandomEntitiesEnabled,
-                                        this.storage
-                                                ::getRandomEntitiesEnabled))
-                                .addOption(booleanOption(builder,
                                         "custom_entity_models_enabled",
                                         "Custom Entity Models",
                                         "Apply OptiFine/EMF-style custom "
@@ -202,7 +191,51 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                                         CinderConfigDefaults
                                                 .CTM_DEBUG_LOGGING,
                                         this.storage::setCtmDebugLogging,
-                                        this.storage::getCtmDebugLogging))))
+                                        this.storage::getCtmDebugLogging)))
+                        .addOptionGroup(builder.createOptionGroup()
+                                .setName(Component.literal(
+                                        "Entity Textures"))
+                                .addOption(booleanOption(builder,
+                                        "entity_textures_enabled",
+                                        "Entity Textures",
+                                        "Enable Cinder's clean-room "
+                                                + "OptiFine-style entity "
+                                                + "texture feature family.",
+                                        CinderConfigDefaults
+                                                .ENTITY_TEXTURES_ENABLED,
+                                        this.storage::setEntityTexturesEnabled,
+                                        this.storage::getEntityTexturesEnabled))
+                                .addOption(booleanOption(builder,
+                                        "random_entities_enabled",
+                                        "Random Entities",
+                                        "Apply OptiFine-style random "
+                                                + "entity texture variants.",
+                                        CinderConfigDefaults
+                                                .RANDOM_ENTITIES_ENABLED,
+                                        this.storage
+                                                ::setRandomEntitiesEnabled,
+                                        this.storage
+                                                ::getRandomEntitiesEnabled))
+                                .addOption(booleanOption(builder,
+                                        "entity_emissive_textures",
+                                        "Entity Emissive",
+                                        "Render fullbright companion textures "
+                                                + "for entity textures.",
+                                        CinderConfigDefaults
+                                                .ENTITY_EMISSIVE_TEXTURES,
+                                        this.storage
+                                                ::setEntityEmissiveTextures,
+                                        this.storage
+                                                ::getEntityEmissiveTextures))
+                                .addOption(booleanOption(builder,
+                                        "entity_texture_debug",
+                                        "Entity Texture Debug",
+                                        "Write gated entity texture "
+                                                + "diagnostics to the log.",
+                                        CinderConfigDefaults
+                                                .ENTITY_TEXTURE_DEBUG,
+                                        this.storage::setEntityTextureDebug,
+                                        this.storage::getEntityTextureDebug))))
                 .addPage(detailsPage(builder))
                 .addPage(animationsPage(builder))
                 .addPage(particlesPage(builder))
@@ -831,6 +864,16 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
         void setCustomAnimationsEnabled(boolean value) { update(b -> b.customAnimationsEnabled(value)); }
         boolean getRandomEntitiesEnabled() { return CinderConfigHolder.get().randomEntitiesEnabled(); }
         void setRandomEntitiesEnabled(boolean value) { update(b -> b.randomEntitiesEnabled(value)); }
+        boolean getEntityTexturesEnabled() { return CinderConfigHolder.get().entityTexturesEnabled(); }
+        void setEntityTexturesEnabled(boolean value) { update(b -> b.entityTexturesEnabled(value)); }
+        boolean getRandomBlockEntityTextures() { return CinderConfigHolder.get().randomBlockEntityTextures(); }
+        void setRandomBlockEntityTextures(boolean value) { update(b -> b.randomBlockEntityTextures(value)); }
+        boolean getEntityEmissiveTextures() { return CinderConfigHolder.get().entityEmissiveTextures(); }
+        void setEntityEmissiveTextures(boolean value) { update(b -> b.entityEmissiveTextures(value)); }
+        boolean getBlockEntityEmissiveTextures() { return CinderConfigHolder.get().blockEntityEmissiveTextures(); }
+        void setBlockEntityEmissiveTextures(boolean value) { update(b -> b.blockEntityEmissiveTextures(value)); }
+        boolean getEntityTextureDebug() { return CinderConfigHolder.get().entityTextureDebug(); }
+        void setEntityTextureDebug(boolean value) { update(b -> b.entityTextureDebug(value)); }
         boolean getCustomEntityModelsEnabled() { return CinderConfigHolder.get().customEntityModelsEnabled(); }
         void setCustomEntityModelsEnabled(boolean value) { update(b -> b.customEntityModelsEnabled(value)); }
         int getCustomAnimationMipmapDistance() { return CinderConfigHolder.get().customAnimationMipmapDistance(); }

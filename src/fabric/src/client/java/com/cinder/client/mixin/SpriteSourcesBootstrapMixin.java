@@ -1,7 +1,9 @@
 package com.cinder.client.mixin;
 
 import com.cinder.Constants;
+import com.cinder.fabric.atlas.CinderEntitySpriteSource;
 import com.cinder.fabric.atlas.CinderItemSpriteSource;
+import com.cinder.fabric.atlas.CinderPaintingSpriteSource;
 import com.cinder.fabric.atlas.CinderTileSpriteSource;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.client.renderer.texture.atlas.SpriteSource;
@@ -68,9 +70,21 @@ public final class SpriteSourcesBootstrapMixin {
                 CinderItemSpriteSource.TYPE_ID,
                 (MapCodec<? extends SpriteSource>)
                         (MapCodec<?>) CinderItemSpriteSource.MAP_CODEC);
+        mapper.put(
+                CinderPaintingSpriteSource.TYPE_ID,
+                (MapCodec<? extends SpriteSource>)
+                        (MapCodec<?>) CinderPaintingSpriteSource.MAP_CODEC);
+        mapper.put(
+                CinderEntitySpriteSource.TYPE_ID,
+                (MapCodec<? extends SpriteSource>)
+                        (MapCodec<?>) CinderEntitySpriteSource.MAP_CODEC);
         LOGGER.info("[{}] registered sprite source type: {}",
                 Constants.MOD_NAME, CinderTileSpriteSource.TYPE_ID);
         LOGGER.info("[{}] registered sprite source type: {}",
                 Constants.MOD_NAME, CinderItemSpriteSource.TYPE_ID);
+        LOGGER.info("[{}] registered sprite source type: {}",
+                Constants.MOD_NAME, CinderPaintingSpriteSource.TYPE_ID);
+        LOGGER.info("[{}] registered sprite source type: {}",
+                Constants.MOD_NAME, CinderEntitySpriteSource.TYPE_ID);
     }
 }
