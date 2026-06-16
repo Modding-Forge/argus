@@ -27,8 +27,9 @@ package com.argus.config;
  *       active unless Colormatic is present)</li>
  *   <li>{@code custom_sky.enabled} = true (OptiFine Custom Sky layers are
  *       active unless a compatibility adapter disables them)</li>
- *   <li>{@code natural_textures.enabled} = true (OptiFine Natural Textures
- *       are active for terrain quads)</li>
+ *   <li>{@code natural_textures.enabled} = false (OptiFine Natural Textures
+ *       are opt-in and only apply when a resource pack supplies
+ *       {@code optifine/natural.properties})</li>
  *   <li>{@code better_snow.enabled} = true (OptiFine-style snow layer
  *       coverage is active for supported non-solid blocks)</li>
  *   <li>{@code custom_animations.enabled} = true (OptiFine custom texture
@@ -87,7 +88,7 @@ public final class ArgusConfigDefaults {
     public static final boolean CUSTOM_SKY_ENABLED = true;
 
     /** Natural Textures feature toggle. */
-    public static final boolean NATURAL_TEXTURES_ENABLED = true;
+    public static final boolean NATURAL_TEXTURES_ENABLED = false;
 
     /** Better Snow feature toggle. */
     public static final boolean BETTER_SNOW_ENABLED = true;

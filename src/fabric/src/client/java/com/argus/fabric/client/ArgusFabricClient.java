@@ -25,6 +25,8 @@ public final class ArgusFabricClient implements ClientModInitializer {
                     Constants.MOD_NAME);
         }
 
+        ArgusBuiltinResourcePacks.register();
+
         // Phase 5: load the config file
         // (config/argus.properties) into the shared holder.
         // The path uses the standard Fabric config dir; if the

@@ -69,10 +69,10 @@ public final class NaturalTexturesReloadListener implements
     private static NaturalTextureRuleSet load(ResourceManager manager) {
         Optional<Resource> resource = manager.getResource(NATURAL_PROPERTIES);
         if (resource.isEmpty()) {
-            NaturalTextureRuleSet defaults = NaturalTextureProperties.defaults();
-            LOGGER.info("[{}] Natural Textures reload: {} built-in rules",
-                    Constants.MOD_NAME, defaults.size());
-            return defaults;
+            LOGGER.info("[{}] Natural Textures reload: no {} found; "
+                            + "feature remains idle",
+                    Constants.MOD_NAME, NATURAL_PROPERTIES);
+            return NaturalTextureRuleSet.empty();
         }
         try (var in = resource.get().open();
              var reader = new InputStreamReader(in,
