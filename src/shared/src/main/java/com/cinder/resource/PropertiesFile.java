@@ -22,8 +22,9 @@ import java.util.Map;
  *   <li>Key/value separator is {@code =} only. {@code :} is not a separator
  *       (it is meaningful in block-spec syntax such as
  *       {@code minecraft:oak_stairs:facing=east}).</li>
- *   <li>Values are <b>not</b> subject to backslash escape processing. Backslashes
- *       are part of the value verbatim; only line terminators separate values.</li>
+ *   <li>Values are <b>not</b> subject to general backslash escape processing.
+ *       A trailing backslash continues the value on the next physical line;
+ *       other backslashes remain part of the value verbatim.</li>
  *   <li>Keys are case-sensitive. {@code MatchBlocks} and {@code matchBlocks}
  *       are two different keys (the OF loader treats them as such).</li>
  *   <li>Comment lines start with {@code #} only. {@code !} is not a comment
@@ -84,6 +85,8 @@ public final class PropertiesFile {
 
         Map<String, String> map = new LinkedHashMap<>();
         String line;
+        StringBuilder logical = null;
+        int logicalLineNumber = 0;
         int lineNumber = 0;
         while ((line = reader.readLine()) != null) {
             lineNumber++;
@@ -91,7 +94,34 @@ public final class PropertiesFile {
                     && line.charAt(0) == '\uFEFF') {
                 line = line.substring(1);
             }
+            int entryLineNumber = lineNumber;
             String trimmed = stripAsciiWhitespace(line);
+            boolean continues = endsWithContinuation(trimmed);
+            if (continues) {
+                trimmed = stripAsciiWhitespace(
+                        trimmed.substring(0, trimmed.length() - 1));
+            }
+            if (logical != null) {
+                if (!trimmed.isEmpty()) {
+                    if (!logical.isEmpty()) {
+                        logical.append(' ');
+                    }
+                    logical.append(trimmed);
+                }
+                if (continues) {
+                    continue;
+                }
+                trimmed = logical.toString();
+                logical = null;
+                entryLineNumber = logicalLineNumber;
+            } else if (continues) {
+                logical = new StringBuilder();
+                logicalLineNumber = lineNumber;
+                if (!trimmed.isEmpty()) {
+                    logical.append(trimmed);
+                }
+                continue;
+            }
             if (trimmed.isEmpty() || trimmed.charAt(0) == '#') {
                 continue;
             }
@@ -107,10 +137,27 @@ public final class PropertiesFile {
             String key = stripAsciiWhitespace(trimmed.substring(0, eq));
             String value = stripAsciiWhitespace(trimmed.substring(eq + 1));
             if (key.isEmpty()) {
-                throw new IOException("Empty key on line " + lineNumber);
+                throw new IOException("Empty key on line " + entryLineNumber);
             }
             // First-wins: ignore subsequent occurrences of the same key.
             map.putIfAbsent(key, value);
+        }
+        if (logical != null) {
+            String trimmed = logical.toString();
+            if (!trimmed.isEmpty() && trimmed.charAt(0) != '#') {
+                int eq = trimmed.indexOf('=');
+                if (eq < 0) {
+                    map.putIfAbsent(trimmed, "");
+                } else {
+                    String key = stripAsciiWhitespace(trimmed.substring(0, eq));
+                    String value = stripAsciiWhitespace(trimmed.substring(eq + 1));
+                    if (key.isEmpty()) {
+                        throw new IOException("Empty key on line "
+                                + logicalLineNumber);
+                    }
+                    map.putIfAbsent(key, value);
+                }
+            }
         }
         return new PropertiesFile(map);
     }
@@ -167,6 +214,10 @@ public final class PropertiesFile {
             end--;
         }
         return s.substring(start, end);
+    }
+
+    private static boolean endsWithContinuation(String s) {
+        return !s.isEmpty() && s.charAt(s.length() - 1) == '\\';
     }
 
     private static boolean isAsciiWhitespace(char c) {

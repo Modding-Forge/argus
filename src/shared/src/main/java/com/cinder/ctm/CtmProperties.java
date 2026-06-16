@@ -207,6 +207,7 @@ public final class CtmProperties {
         if (tintBlockSpec != null && !tintBlockSpec.trim().isEmpty()) {
             b.tintBlock(BlockSpec.parse(tintBlockSpec.trim()));
         }
+        b.layerHint(CtmRenderLayerHint.fromKey(props.get("layer")));
 
         // ctm.<n>=<tileIndex> overrides (CTM_COMPACT)
         if (method == CtmMethod.CTM_COMPACT) {
@@ -281,6 +282,14 @@ public final class CtmProperties {
                 && !trimmed.startsWith("textures/")) {
             return new NamespaceId(NamespaceId.DEFAULT_NAMESPACE,
                     "block/" + trimmed);
+        }
+        int colon = trimmed.indexOf(':');
+        if (colon > 0
+                && trimmed.indexOf(':', colon + 1) < 0
+                && trimmed.indexOf('/') < 0
+                && trimmed.indexOf('.') < 0) {
+            return new NamespaceId(trimmed.substring(0, colon),
+                    "block/" + trimmed.substring(colon + 1));
         }
         CtmTileSpec tile = CtmTileSpec.fromSpec(spec,
                 NamespaceId.DEFAULT_NAMESPACE, null);

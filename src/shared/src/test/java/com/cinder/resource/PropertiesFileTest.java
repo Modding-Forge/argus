@@ -85,6 +85,17 @@ class PropertiesFileTest {
     }
 
     @Test
+    void trailingBackslashContinuesValue() throws IOException {
+        PropertiesFile p = PropertiesFile.parse(new StringReader(
+                "matchBlocks=stone dirt \\\n"
+                        + "\\\n"
+                        + "sand gravel\n"
+                        + "method=overlay\n"));
+        assertEquals("stone dirt sand gravel", p.get("matchBlocks"));
+        assertEquals("overlay", p.get("method"));
+    }
+
+    @Test
     void valuesCanContainEquals() throws IOException {
         PropertiesFile p = PropertiesFile.parse(new StringReader(
                 "condition=nbt.display.Name=foo\n"));

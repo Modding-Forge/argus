@@ -44,6 +44,9 @@ import java.util.Optional;
  *   <li>{@code tintIndex}/{@code tintBlock}: optional overlay tint metadata.
  *       Renderers may use this to apply Vanilla block tint sources to overlay
  *       layers without changing the base block's vertex color.</li>
+ *   <li>{@code layer}: optional renderer-layer hint. Shared stores it as
+ *       backend-neutral metadata; Fabric/Sodium maps it to its concrete
+ *       section layer.</li>
  * </ul>
  *
  * <p>Mutability: immutable.
@@ -72,6 +75,7 @@ public final class CtmRule {
     private final int[] ctmOverrides;     // length 47, -1 = no override
     private final int tintIndex;
     private final BlockSpec tintBlock;
+    private final CtmRenderLayerHint layerHint;
     private final List<ComponentMatchers.Compiled> nbtMatchers;
     private final String sourceFile;
     private final int sourceLine;
@@ -95,6 +99,7 @@ public final class CtmRule {
         this.ctmOverrides = b.ctmOverrides;
         this.tintIndex = b.tintIndex;
         this.tintBlock = b.tintBlock;
+        this.layerHint = b.layerHint;
         this.nbtMatchers = List.copyOf(b.nbtMatchers);
         this.sourceFile = b.sourceFile;
         this.sourceLine = b.sourceLine;
@@ -172,6 +177,10 @@ public final class CtmRule {
         return Optional.ofNullable(tintBlock);
     }
 
+    public CtmRenderLayerHint layerHint() {
+        return layerHint;
+    }
+
     public List<ComponentMatchers.Compiled> nbtMatchers() {
         return nbtMatchers;
     }
@@ -210,6 +219,7 @@ public final class CtmRule {
         private int[] ctmOverrides;
         private int tintIndex = -1;
         private BlockSpec tintBlock;
+        private CtmRenderLayerHint layerHint = CtmRenderLayerHint.AUTO;
         private final List<ComponentMatchers.Compiled> nbtMatchers = new ArrayList<>();
         private String sourceFile;
         private int sourceLine;
@@ -234,6 +244,10 @@ public final class CtmRule {
         public Builder ctmOverrides(int[] overrides) { this.ctmOverrides = overrides; return this; }
         public Builder tintIndex(int index) { this.tintIndex = index; return this; }
         public Builder tintBlock(BlockSpec spec) { this.tintBlock = spec; return this; }
+        public Builder layerHint(CtmRenderLayerHint hint) {
+            this.layerHint = hint == null ? CtmRenderLayerHint.AUTO : hint;
+            return this;
+        }
         public Builder addNbtMatcher(ComponentMatchers.Compiled c) { this.nbtMatchers.add(c); return this; }
         public Builder sourceFile(String f) { this.sourceFile = f; return this; }
         public Builder sourceLine(int n) { this.sourceLine = n; return this; }

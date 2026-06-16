@@ -88,14 +88,28 @@ class CtmPropertiesTest {
         CtmRule r = parse(
                 "method=overlay\n"
                         + "matchBlocks=minecraft:dirt\n"
-                        + "connectTiles=sand minecraft:block/grass_block_top\n"
+                        + "connectTiles=sand minecraft:sand minecraft:block/grass_block_top\n"
                         + "tiles=0-16\n",
                 "x.properties");
-        assertEquals(2, r.connectTiles().size());
+        assertEquals(3, r.connectTiles().size());
         assertEquals(new NamespaceId("minecraft", "block/sand"),
                 r.connectTiles().get(0));
-        assertEquals(new NamespaceId("minecraft", "block/grass_block_top"),
+        assertEquals(new NamespaceId("minecraft", "block/sand"),
                 r.connectTiles().get(1));
+        assertEquals(new NamespaceId("minecraft", "block/grass_block_top"),
+                r.connectTiles().get(2));
+    }
+
+    @Test
+    void layerHintIsParsed() {
+        CtmRule r = parse(
+                "method=overlay\n"
+                        + "matchBlocks=minecraft:dirt\n"
+                        + "connectTiles=minecraft:sand\n"
+                        + "layer=cutout\n"
+                        + "tiles=0-16\n",
+                "x.properties");
+        assertEquals(CtmRenderLayerHint.CUTOUT, r.layerHint());
     }
 
     @Test
@@ -109,6 +123,22 @@ class CtmPropertiesTest {
         assertEquals(2, r.connectBlocks().size());
         assertEquals("sand", r.connectBlocks().get(0).name());
         assertEquals("grass_block", r.connectBlocks().get(1).name());
+    }
+
+    @Test
+    void multilineMatchBlocksWithContinuationsAreParsed() {
+        CtmRule r = parse(
+                "method=overlay\n"
+                        + "matchBlocks=minecraft:stone \\\n"
+                        + "\\\n"
+                        + "minecraft:dirt minecraft:sand\n"
+                        + "connectTiles=minecraft:snow\n"
+                        + "tiles=0-16\n",
+                "x.properties");
+        assertEquals(3, r.matchBlocks().size());
+        assertEquals("stone", r.matchBlocks().get(0).name());
+        assertEquals("dirt", r.matchBlocks().get(1).name());
+        assertEquals("sand", r.matchBlocks().get(2).name());
     }
 
     @Test

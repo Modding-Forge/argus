@@ -1,5 +1,7 @@
 package com.cinder.client.sodium;
 
+import com.cinder.ctm.CtmRenderLayerHint;
+import com.cinder.ctm.CtmRule;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import org.jspecify.annotations.Nullable;
 
@@ -57,5 +59,19 @@ public final class CtmSodiumLayerPolicy {
         return sourceLayer == ChunkSectionLayer.TRANSLUCENT
                 ? ChunkSectionLayer.TRANSLUCENT
                 : ChunkSectionLayer.CUTOUT;
+    }
+
+    /**
+     * Returns the layer for an overlay CTM quad while honoring an explicit
+     * OptiFine {@code layer=} hint.
+     */
+    public ChunkSectionLayer overlayLayer(CtmRule rule,
+                                          @Nullable ChunkSectionLayer sourceLayer) {
+        return switch (rule.layerHint()) {
+            case SOLID -> ChunkSectionLayer.SOLID;
+            case CUTOUT, CUTOUT_MIPPED -> ChunkSectionLayer.CUTOUT;
+            case TRANSLUCENT -> ChunkSectionLayer.TRANSLUCENT;
+            case AUTO -> overlayLayer(sourceLayer);
+        };
     }
 }

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -232,6 +233,54 @@ class CtmSelectorTest {
 
         assertNotNull(sel);
         assertEquals(15, sel.tileIndex());
+    }
+
+    @Test
+    void overlay_usesNamespacedConnectTilesForNeighbourSelection() {
+        CtmRule r = parseRule(
+                "method=overlay\n"
+                        + "matchBlocks=minecraft:dirt\n"
+                        + "connectTiles=minecraft:sand\n"
+                        + "tiles=0-16\n");
+        Grid g = new Grid("minecraft:dirt",
+                new NamespaceId("minecraft", "block/dirt"));
+        g.set(0, 0, -1, "minecraft:sand",
+                new NamespaceId("minecraft", "block/sand"));
+
+        CtmSelectionResult sel = selector(r).select(r, g, 0, 0, 0, Faces.UP);
+
+        assertNotNull(sel);
+        assertEquals(15, sel.tileIndex());
+    }
+
+    @Test
+    void overlayPrefilterRejectsRulesWithoutNearbyConnectMaterial() {
+        CtmRule r = parseRule(
+                "method=overlay\n"
+                        + "matchBlocks=minecraft:dirt\n"
+                        + "connectTiles=minecraft:sand\n"
+                        + "tiles=0-16\n");
+        Grid g = new Grid("minecraft:dirt",
+                new NamespaceId("minecraft", "block/dirt"));
+        g.set(0, 0, -1, "minecraft:stone",
+                new NamespaceId("minecraft", "block/stone"));
+
+        assertFalse(selector(r).maySelectConnectedOverlay(r, g, Faces.UP));
+    }
+
+    @Test
+    void overlayPrefilterAcceptsRulesWithNearbyConnectMaterial() {
+        CtmRule r = parseRule(
+                "method=overlay\n"
+                        + "matchBlocks=minecraft:dirt\n"
+                        + "connectTiles=minecraft:sand\n"
+                        + "tiles=0-16\n");
+        Grid g = new Grid("minecraft:dirt",
+                new NamespaceId("minecraft", "block/dirt"));
+        g.set(0, 0, -1, "minecraft:sand",
+                new NamespaceId("minecraft", "block/sand"));
+
+        assertTrue(selector(r).maySelectConnectedOverlay(r, g, Faces.UP));
     }
 
     @Test

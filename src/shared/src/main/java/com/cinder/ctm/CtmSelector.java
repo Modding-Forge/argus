@@ -191,6 +191,40 @@ public final class CtmSelector {
         return CtmRenderSelection.from(rule, face, baseSprite, primary, null);
     }
 
+    /**
+     * Cheap overlay prefilter for renderer hot paths.
+     *
+     * <p>Performance: HOT PATH. Allocation policy: none. This intentionally
+     * checks only the side/edge connectivity that can produce overlay tiles.
+     * It avoids building full overlay selections for common packs that attach
+     * many overlay rules to the same substrate block.
+     */
+    public boolean maySelectConnectedOverlay(CtmRule rule, NeighborView view,
+                                             int face) {
+        if (rule == null || view == null) {
+            return false;
+        }
+        if (rule.method() != CtmMethod.OVERLAY
+                && rule.method() != CtmMethod.OVERLAY_CTM) {
+            return true;
+        }
+        int[][] sides = overlaySideOffsets(face);
+        for (int i = 0; i < sides.length; i++) {
+            int[] d = sides[i];
+            if (overlayConnect(rule, view, d[0], d[1], d[2], face)) {
+                return true;
+            }
+        }
+        int[][] edges = overlayEdgeOffsets(face);
+        for (int i = 0; i < edges.length; i++) {
+            int[] d = edges[i];
+            if (overlayConnect(rule, view, d[0], d[1], d[2], face)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // --- per-method selectors -----------------------------------------
 
     private static boolean isLayered(CtmRule rule) {

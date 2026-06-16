@@ -117,6 +117,10 @@ public final class CtmRenderResolver {
             NamespaceId baseSprite,
             ArrayList<CtmOverlayTile> overlays) {
         for (CtmRule rule : rules) {
+            if (rule.method().isOverlay()
+                    && !selector.maySelectConnectedOverlay(rule, view, face)) {
+                continue;
+            }
             CtmRenderSelection selection = selector.selectRender(
                     rule, view, x, y, z, face, baseSprite);
             if (selection == null || selection.isPrimarySkip()) {

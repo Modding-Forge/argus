@@ -557,7 +557,6 @@ public final class CtmSodiumQuadProcessor {
                                   BlockPos pos,
                                   @Nullable ChunkSectionLayer sourceLayer,
                                   CtmSodiumQuadPlan plan) {
-        ChunkSectionLayer overlayLayer = layerPolicy.overlayLayer(sourceLayer);
         for (CtmOverlayTile overlayTile : overlayTiles) {
             Optional<CtmMaterialEntry> material = materialTable.find(
                     overlayTile.rule(), overlayTile.tileIndex());
@@ -571,6 +570,8 @@ public final class CtmSodiumQuadProcessor {
             }
             int color = overlayTint.color(
                     overlayTile.rule(), state, level, pos);
+            ChunkSectionLayer overlayLayer = layerPolicy.overlayLayer(
+                    overlayTile.rule(), sourceLayer);
             plan.addOverlay(sprite, color, overlayLayer);
         }
     }
