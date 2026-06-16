@@ -41,16 +41,16 @@ base {
     // Phase 4.7: the jar name is just the mod id; Gradle appends
     // `-${version}` automatically. The previous
     // `"${project.mod_id}-${project.mod_version}"` doubled the
-    // version (`cinder-0.1.0-SNAPSHOT-0.1.0-SNAPSHOT.jar`).
+    // version (`argus-0.1.0-SNAPSHOT-0.1.0-SNAPSHOT.jar`).
     archivesName = "${project.mod_id}"
 }
 
 loom {
     splitEnvironmentSourceSets()
-    accessWidenerPath = file("src/main/resources/cinder.accesswidener")
+    accessWidenerPath = file("src/main/resources/argus.accesswidener")
 
     mods {
-        // The MOD_ID in fabric.mod.json is "cinder". Each mod gets its
+        // The MOD_ID in fabric.mod.json is "argus". Each mod gets its
         // own (set of) source sets; for a single mod we use the default
         // "main" and "client" environments.
         "${project.mod_id}" {
@@ -71,7 +71,7 @@ loom {
         // (asset-index, natives dir, version type, etc.).
         "client" {
             client()
-            name "Cinder Dev Client"
+            name "Argus Dev Client"
             // Make the IDE aware of the main class so the
             // debugger can attach without re-resolving.
             ideConfigGenerated true
@@ -85,7 +85,7 @@ dependencies {
     // below. We list it as a `compileOnly` so that the shared
     // classes are on the compile classpath but are not consumed
     // as a separate runtime dependency (they are physically bundled
-    // into the resulting `cinder-*.jar`).
+    // into the resulting `argus-*.jar`).
     // The `shared` module's classes are merged into the
     // final fabric jar via the `tasks.withType(Jar).configure
     // Each { from(... output) }` block below; we list it as
@@ -126,7 +126,7 @@ processResources {
     filesMatching('**/*.json') {
         expand project: project,
                mod_id: project.mod_id,
-               mod_name: 'Cinder',
+               mod_name: 'Argus',
                mod_version: project.mod_version,
                minecraft_version: project.minecraft_version,
                loader_version: project.loader_version,

@@ -16,7 +16,7 @@ pluginManagement {
 //   - src:shared   - loader-agnostic core (java-library), no Minecraft, no Fabric/NeoForge APIs
 //   - src:fabric   - Fabric loader shim + ModInitializer + ClientModInitializer (the jar we build)
 //   - src:neoforge - STUB ONLY - not included in this build; awaits a NeoForge 26.2 toolchain.
-rootProject.name = 'cinder'
+rootProject.name = 'argus'
 
 include 'src:shared'
 include 'src:fabric'

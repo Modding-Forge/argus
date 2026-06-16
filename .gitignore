@@ -10,7 +10,7 @@ bin/
 *.ipr
 *.iws
 .vscode/
-Cinder.code-workspace
+Argus.code-workspace
 *.code-workspace
 .classpath
 .project
@@ -27,7 +27,7 @@ replay_pid*.log
 runclient-latest.*.log
 
 # Local archives / templates
-cinder-template-*.zip
+argus-template-*.zip
 neoforge_*.zip
 
 # Local scratch

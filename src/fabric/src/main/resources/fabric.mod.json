@@ -3,31 +3,31 @@
   "id": "${mod_id}",
   "version": "${mod_version}",
   "name": "${mod_name}",
-  "description": "Clean-room OptiFine-style visual compatibility for Minecraft's modern renderer path. Fabric and Sodium first; NeoForge is planned.",
+  "description": "Stable beta Sodium-native OptiFine resource pack compatibility for Fabric. Existing packs work without bridge layers; use EMF/ETF for entity models and animations.",
   "authors": [
-    "The Cinder Contributors"
+    "The Argus Contributors"
   ],
   "license": "PolyForm-Shield-1.0.0",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.cinder.fabric.CinderFabric"
+      "com.argus.fabric.ArgusFabric"
     ],
     "client": [
-      "com.cinder.fabric.client.CinderFabricClient"
+      "com.argus.fabric.client.ArgusFabricClient"
     ],
     "sodium:config_api_user": [
-      "com.cinder.client.sodium.CinderSodiumConfigEntryPoint"
+      "com.argus.client.sodium.ArgusSodiumConfigEntryPoint"
     ]
   },
   "mixins": [
-    "cinder.mixins.json",
+    "argus.mixins.json",
     {
-      "config": "cinder.client.mixins.json",
+      "config": "argus.client.mixins.json",
       "environment": "client"
     }
   ],
-  "accessWidener": "cinder.accesswidener",
+  "accessWidener": "argus.accesswidener",
   "depends": {
     "fabricloader": ">=${loader_version}",
     "java": ">=25",

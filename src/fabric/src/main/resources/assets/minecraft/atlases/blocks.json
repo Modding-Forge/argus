@@ -1,7 +1,7 @@
 {
   "sources": [
     {
-      "type": "cinder:tiles"
+      "type": "argus:tiles"
     }
   ]
 }

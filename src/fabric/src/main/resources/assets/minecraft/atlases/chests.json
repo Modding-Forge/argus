@@ -6,7 +6,7 @@
       "source": "entity/chest"
     },
     {
-      "type": "cinder:random_entity_sprites"
+      "type": "argus:random_entity_sprites"
     }
   ]
 }

@@ -1,14 +1,20 @@
-# Cinder
+# Argus
 
-Cinder is a clean-room Minecraft Java client mod that targets OptiFine-style visual resource-pack compatibility on Mojang's modern renderer path.
+Argus Panoptes, the all-seeing giant of Greek mythology, had a hundred eyes and missed nothing.
+
+Argus is a Sodium-native client mod that brings OptiFine resource pack compatibility to Fabric, built from the ground up for the modern Minecraft renderer. No bridges, no wrapper layers, no compatibility hacks: just direct integration with the rendering paths where the features actually live.
+
+This is a stable beta release. The core feature set works in-game, and most supported OptiFine resource-pack features should work for real texture packs without pack changes. Your existing OptiFine resource packs are the target: install the pack, enable Argus, and keep building on the same assets.
+
+Entity texture features are included for the OptiFine scope, but new entity models and entity animations are not part of Argus. Use EMF and ETF for that stack. When ETF is installed, Argus automatically disables its overlapping Entity Texture Features and greys out the related settings, so the two setups can coexist cleanly.
 
 The current implementation is Fabric first and requires Sodium. Shared feature logic lives in `src/shared`; Fabric, Minecraft, resource reload, Mixin, and Sodium integration live in `src/fabric`. `src/neoforge` is intentionally a TODO stub until a suitable Minecraft 26.2 NeoForge toolchain exists.
 
 ## Why One Mod For Many Features?
 
-Cinder intentionally implements multiple OptiFine-style visual systems in one clean-room mod instead of treating CTM, Better Grass, Emissive Textures, CIT, and Custom GUI as unrelated islands.
+Argus intentionally implements multiple OptiFine-style visual systems in one clean-room mod instead of treating CTM, Better Grass, Emissive Textures, CIT, and Custom GUI as unrelated islands.
 
-That shape matters because these features share real infrastructure: resource-pack discovery, properties parsing, condition matching, reload snapshots, atlas injection, renderer-safe lookup tables, compatibility policy, config UI, and hot-path prefilters. Reusing those parts keeps behavior more consistent, reduces duplicate renderer hooks, and gives Cinder room to optimize across feature boundaries.
+That shape matters because these features share real infrastructure: resource-pack discovery, properties parsing, condition matching, reload snapshots, atlas injection, renderer-safe lookup tables, compatibility policy, config UI, and hot-path prefilters. Reusing those parts keeps behavior more consistent, reduces duplicate renderer hooks, and gives Argus room to optimize across feature boundaries.
 
 The goal is not to bundle features for the sake of size. The goal is a clean reimplementation where shared systems are designed once, tested once, and reused by every feature that needs them. Compared with stacking several equivalent single-feature mods, that can mean fewer duplicated caches, fewer competing Mixins, more stable priority rules, and a clearer path toward Sodium- and future-renderer-friendly data flow.
 
@@ -23,15 +29,15 @@ The goal is not to bundle features for the sake of size. The goal is a clean rei
 - Custom Colors and Colormaps support for `optifine/color.properties`, `palette.block.*`, `optifine/colormap/**/*.properties`, special colormap PNGs, immutable reload snapshots, hardcoded Vanilla color hooks, and Sodium/Minecraft block tint integration.
 - Custom Sky layer support for `optifine/sky/world*/sky*.properties`, including numbered layer scanning, fades, weather/biome/height conditions, transitions, rotation, and common blend modes.
 - Natural Textures support for `optifine/natural.properties` and built-in Vanilla-style defaults on Sodium terrain quads.
-- Better Snow support with OptiFine-style snow layer coverage for supported non-solid blocks, plus Cinder's Better-Grass-owned snow side remap for solid blocks with snow above.
+- Better Snow support with OptiFine-style snow layer coverage for supported non-solid blocks, plus Argus's Better-Grass-owned snow side remap for solid blocks with snow above.
 - OptiFine Entity Texture support for Random Entity and Random Tile Entity textures, living-entity layer synchronization, paintings, chest/shulker block-entity texture hooks, reload-time companion texture indexing, and emissive companion passes for supported living-entity textures and generic cutout layers.
-- Compatibility handling for ETF and EMF: Cinder's overlapping Entity Texture features automatically stand down when Traben's ETF is installed, and Cinder keeps CEM/EMF-style model replacement separate so EMF can own entity models.
+- Compatibility handling for ETF and EMF: Argus's overlapping Entity Texture features automatically stand down when Traben's ETF is installed, and Argus keeps CEM/EMF-style model replacement separate so EMF can own entity models.
 - Shared condition engine for CIT, Custom GUI, and future condition-based features.
 - Fabric client integration through Sodium's terrain quad path and Minecraft's item/GUI rendering paths where those features live.
 
 ## Status
 
-Cinder is early development software, but it is already well past the sketch stage. The Fabric/Sodium build runs real resource packs, renders multiple OptiFine-style feature families in-game, and uses a shared parser/matcher/snapshot architecture instead of one-off experiments.
+Argus is a stable beta: it is not “everything OptiFine ever did,” but the supported foundation is real, tested, and already useful with existing packs. The Fabric/Sodium build runs real resource packs, renders multiple OptiFine-style feature families in-game, and uses a shared parser/matcher/snapshot architecture instead of one-off experiments.
 
 Fabric/Sodium is the supported runtime target today. NeoForge is planned but not part of the build yet. The current terrain renderer path is a correctness-oriented Sodium quad remap path; it is not claimed as a final Vulkan-native implementation.
 
@@ -53,15 +59,14 @@ Implemented or visible today:
   - Exact parity for uncommon blend math, `sun.properties`, `moon_phases.properties`, and broader pack smoke coverage is still planned.
 - Natural Textures and Better Snow are implemented on the Sodium terrain path and configurable from the Sodium menu.
   - Their dedicated in-game smoke matrix is still ongoing.
-- OptiFine Entity Textures are implemented and in-game verified for the OF feature scope Cinder targets: living-entity random base textures, immutable reload snapshots, entity and block-entity render-state context capture, numbered variant discovery, name/biome/height/color/baby/health/moon/day/weather/size/block/profession/legacy-NBT conditions, first layer/overlay synchronization, random paintings, chest/shulker Random Tile Entity hooks, ETF fail-safe detection, and emissive companion rendering for base living-entity models plus generic cutout layers. PureBDcraft Random Entities, random paintings, and synthetic condition/layer/block-entity smoke packs work on this path.
-  - When ETF is installed, Cinder disables the overlapping Entity Texture runtime and greys out the related Sodium menu entries with an explanation. Cinder is also compatible with EMF by keeping entity model replacement separate from its own OptiFine Entity Texture implementation.
+- OptiFine Entity Textures are implemented and in-game verified for the OF feature scope Argus targets: living-entity random base textures, immutable reload snapshots, entity and block-entity render-state context capture, numbered variant discovery, name/biome/height/color/baby/health/moon/day/weather/size/block/profession/legacy-NBT conditions, first layer/overlay synchronization, random paintings, chest/shulker Random Tile Entity hooks, ETF fail-safe detection, and emissive companion rendering for base living-entity models plus generic cutout layers. PureBDcraft Random Entities, random paintings, and synthetic condition/layer/block-entity smoke packs work on this path.
+  - When ETF is installed, Argus disables the overlapping Entity Texture runtime and greys out the related Sodium menu entries with an explanation. Argus is also compatible with EMF by keeping entity model replacement separate from its own OptiFine Entity Texture implementation.
   - ETF-only extras, broader stress testing across many third-party packs, and CEM/Fresh Animations parity remain separate work.
-- Custom Entity Models have config/menu wiring, a shared parser/data-model foundation for simple `.jem/.jpm` structures, Fabric reload/runtime snapshots, and a narrow synthetic Creeper smoke hook that proves the CEM runtime can affect an entity renderer in-game.
-  - Real Minecraft model-part conversion, animation expressions, attachments, Fresh Animations/EMF parity, and broad CEM renderer integration are still planned.
+- Entity model and entity animation replacement are intentionally not included in this release. Use EMF and ETF for packs such as Fresh Animations; Argus is designed to step aside for ETF where features overlap.
 
 Not implemented yet:
 
-- Broad Custom Entity Models rendering and Fresh Animations parity.
+- Entity model replacement and entity animation packs, including Fresh Animations-style CEM support.
 - NeoForge support.
 
 See `plan/roadmap.md` for the detailed phase status. The README is intentionally conservative: a feature being implemented does not mean it has complete OptiFine parity.
@@ -99,8 +104,8 @@ Install test resource packs into `src/fabric/run/resourcepacks/` for local devel
 
 ## Clean-Room Policy
 
-Cinder aims for OptiFine-visible resource-pack behavior without copying OptiFine code. OptiFine may be used only as a behavioral reference. Do not copy or transliterate OptiFine implementation code, identifiers, class layouts, method bodies, or internal control flow into this repository.
+Argus aims for OptiFine-visible resource-pack behavior without copying OptiFine code. OptiFine may be used only as a behavioral reference. Do not copy or transliterate OptiFine implementation code, identifiers, class layouts, method bodies, or internal control flow into this repository.
 
 ## License
 
-Cinder is licensed under the PolyForm Shield License 1.0.0. See [LICENSE](LICENSE).
+Argus is licensed under the PolyForm Shield License 1.0.0. See [LICENSE](LICENSE).

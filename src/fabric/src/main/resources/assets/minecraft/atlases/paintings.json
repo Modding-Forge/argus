@@ -6,7 +6,7 @@
       "source": "painting"
     },
     {
-      "type": "cinder:random_paintings"
+      "type": "argus:random_paintings"
     }
   ]
 }

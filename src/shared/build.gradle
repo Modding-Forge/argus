@@ -15,7 +15,7 @@ plugins {
 }
 
 java {
-    // We publish a `cinderCommon` jar that the `fabric/` module (and later the
+    // We publish a `argusCommon` jar that the `fabric/` module (and later the
     // `neoforge/` module) adds to its classpath. No `jar` override is needed -
     // Gradle's `java-library` already produces a regular jar with the
     // `compileClasspath`/`runtimeClasspath` information for downstream

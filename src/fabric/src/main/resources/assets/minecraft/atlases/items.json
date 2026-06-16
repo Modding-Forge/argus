@@ -1,7 +1,7 @@
 {
   "sources": [
     {
-      "type": "cinder:cit_items"
+      "type": "argus:cit_items"
     }
   ]
 }

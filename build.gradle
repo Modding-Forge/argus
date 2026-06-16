@@ -32,8 +32,8 @@ allprojects {
         // Add a tiny machine-readable marker so anyone can tell at a glance which version they have.
         manifest {
             attributes([
-                'Cinder-Version'   : project.version,
-                'Cinder-Group'     : project.group,
+                'Argus-Version'   : project.version,
+                'Argus-Group'     : project.group,
                 'Built-By'         : 'Gradle'
             ])
         }

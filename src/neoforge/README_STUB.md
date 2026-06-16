@@ -28,10 +28,10 @@ commit:
 - `settings.gradle` gets `include 'neoforge'`,
 - `neoforge/build.gradle` (using ModDevGradle),
 - `neoforge/src/main/resources/META-INF/neoforge.mods.toml`,
-- `neoforge/src/main/java/com/cinder/neoforge/CinderNeoForge.java`,
-- `neoforge/src/main/java/com/cinder/neoforge/platform/NeoForgePlatform.java`,
-- `neoforge/src/main/resources/META-INF/services/com.cinder.platform.Platform`
-  registering `com.cinder.neoforge.platform.NeoForgePlatform`,
+- `neoforge/src/main/java/com/argus/neoforge/ArgusNeoForge.java`,
+- `neoforge/src/main/java/com/argus/neoforge/platform/NeoForgePlatform.java`,
+- `neoforge/src/main/resources/META-INF/services/com.argus.platform.Platform`
+  registering `com.argus.neoforge.platform.NeoForgePlatform`,
 - a `neoforge` mixin source set mirroring the `fabric` one.
 
 No code in `common/` or `fabric/` will need to change.
