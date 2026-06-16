@@ -43,6 +43,11 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
     private static final Identifier CONFIG_ICON =
             Identifier.fromNamespaceAndPath(MOD_ID,
                     "textures/gui/config_icon.png");
+    private static final String ETF_MOD_ID = "entity_texture_features";
+    private static final String ETF_COMPAT_TOOLTIP =
+            " Disabled because Entity Texture Features is installed. "
+                    + "ETF owns this overlapping entity texture path for "
+                    + "this session.";
 
     private final OptionStorage storage = new OptionStorage();
     private final StorageEventHandler storageHandler = this.storage::flush;
@@ -195,7 +200,7 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                         .addOptionGroup(builder.createOptionGroup()
                                 .setName(Component.literal(
                                         "Entity Textures"))
-                                .addOption(booleanOption(builder,
+                                .addOption(entityTextureOption(builder,
                                         "entity_textures_enabled",
                                         "Entity Textures",
                                         "Enable Cinder's clean-room "
@@ -205,7 +210,7 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                                                 .ENTITY_TEXTURES_ENABLED,
                                         this.storage::setEntityTexturesEnabled,
                                         this.storage::getEntityTexturesEnabled))
-                                .addOption(booleanOption(builder,
+                                .addOption(entityTextureOption(builder,
                                         "random_entities_enabled",
                                         "Random Entities",
                                         "Apply OptiFine-style random "
@@ -216,7 +221,19 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                                                 ::setRandomEntitiesEnabled,
                                         this.storage
                                                 ::getRandomEntitiesEnabled))
-                                .addOption(booleanOption(builder,
+                                .addOption(entityTextureOption(builder,
+                                        "random_block_entity_textures",
+                                        "Random Tile Entities",
+                                        "Apply OptiFine-style random texture "
+                                                + "variants to supported "
+                                                + "BlockEntity renderers.",
+                                        CinderConfigDefaults
+                                                .RANDOM_BLOCK_ENTITY_TEXTURES,
+                                        this.storage
+                                                ::setRandomBlockEntityTextures,
+                                        this.storage
+                                                ::getRandomBlockEntityTextures))
+                                .addOption(entityTextureOption(builder,
                                         "entity_emissive_textures",
                                         "Entity Emissive",
                                         "Render fullbright companion textures "
@@ -227,7 +244,7 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                                                 ::setEntityEmissiveTextures,
                                         this.storage
                                                 ::getEntityEmissiveTextures))
-                                .addOption(booleanOption(builder,
+                                .addOption(entityTextureOption(builder,
                                         "entity_texture_debug",
                                         "Entity Texture Debug",
                                         "Write gated entity texture "
@@ -744,6 +761,24 @@ public final class CinderSodiumConfigEntryPoint implements ConfigEntryPoint {
                 .setBinding(setter, getter)
                 .setDefaultValue(defaultValue)
                 .setFlags(flags);
+    }
+
+    private BooleanOptionBuilder entityTextureOption(
+            ConfigBuilder builder,
+            String path,
+            String name,
+            String tooltip,
+            boolean defaultValue,
+            Consumer<Boolean> setter,
+            Supplier<Boolean> getter,
+            OptionFlag... flags) {
+        boolean etfLoaded = FabricLoader.getInstance().isModLoaded(ETF_MOD_ID);
+        String finalTooltip = etfLoaded
+                ? tooltip + ETF_COMPAT_TOOLTIP
+                : tooltip;
+        return booleanOption(builder, path, name, finalTooltip, defaultValue,
+                setter, getter, flags)
+                .setEnabled(!etfLoaded);
     }
 
     private IntegerOptionBuilder integerOption(ConfigBuilder builder,

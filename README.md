@@ -25,6 +25,7 @@ The goal is not to bundle features for the sake of size. The goal is a clean rei
 - Natural Textures support for `optifine/natural.properties` and built-in Vanilla-style defaults on Sodium terrain quads.
 - Better Snow support with OptiFine-style snow layer coverage for supported non-solid blocks, plus Cinder's Better-Grass-owned snow side remap for solid blocks with snow above.
 - OptiFine Entity Texture support for Random Entity and Random Tile Entity textures, living-entity layer synchronization, paintings, chest/shulker block-entity texture hooks, reload-time companion texture indexing, and emissive companion passes for supported living-entity textures and generic cutout layers.
+- Compatibility handling for ETF and EMF: Cinder's overlapping Entity Texture features automatically stand down when Traben's ETF is installed, and Cinder keeps CEM/EMF-style model replacement separate so EMF can own entity models.
 - Shared condition engine for CIT, Custom GUI, and future condition-based features.
 - Fabric client integration through Sodium's terrain quad path and Minecraft's item/GUI rendering paths where those features live.
 
@@ -53,7 +54,8 @@ Implemented or visible today:
 - Natural Textures and Better Snow are implemented on the Sodium terrain path and configurable from the Sodium menu.
   - Their dedicated in-game smoke matrix is still ongoing.
 - OptiFine Entity Textures are implemented and in-game verified for the OF feature scope Cinder targets: living-entity random base textures, immutable reload snapshots, entity and block-entity render-state context capture, numbered variant discovery, name/biome/height/color/baby/health/moon/day/weather/size/block/profession/legacy-NBT conditions, first layer/overlay synchronization, random paintings, chest/shulker Random Tile Entity hooks, ETF fail-safe detection, and emissive companion rendering for base living-entity models plus generic cutout layers. PureBDcraft Random Entities, random paintings, and synthetic condition/layer/block-entity smoke packs work on this path.
-  - ETF-only extras, broader stress testing across many third-party packs, and CEM/EMF-style model replacement remain separate work.
+  - When ETF is installed, Cinder disables the overlapping Entity Texture runtime and greys out the related Sodium menu entries with an explanation. Cinder is also compatible with EMF by keeping entity model replacement separate from its own OptiFine Entity Texture implementation.
+  - ETF-only extras, broader stress testing across many third-party packs, and CEM/Fresh Animations parity remain separate work.
 - Custom Entity Models have config/menu wiring, a shared parser/data-model foundation for simple `.jem/.jpm` structures, Fabric reload/runtime snapshots, and a narrow synthetic Creeper smoke hook that proves the CEM runtime can affect an entity renderer in-game.
   - Real Minecraft model-part conversion, animation expressions, attachments, Fresh Animations/EMF parity, and broad CEM renderer integration are still planned.
 
