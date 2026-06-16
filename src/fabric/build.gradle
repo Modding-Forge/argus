@@ -38,11 +38,10 @@ version = project.mod_version
 group = project.maven_group
 
 base {
-    // Phase 4.7: the jar name is just the mod id; Gradle appends
-    // `-${version}` automatically. The previous
-    // `"${project.mod_id}-${project.mod_version}"` doubled the
-    // version (`argus-0.1.0-SNAPSHOT-0.1.0-SNAPSHOT.jar`).
-    archivesName = "${project.mod_id}"
+    // Keep release artifacts loader-specific; Gradle appends
+    // `-${version}` automatically, producing names like
+    // `argus-fabric-0.8.0.jar`.
+    archivesName = "${project.mod_id}-fabric"
 }
 
 loom {
