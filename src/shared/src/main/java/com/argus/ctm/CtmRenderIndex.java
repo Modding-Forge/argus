@@ -19,15 +19,18 @@ import java.util.Objects;
  */
 public final class CtmRenderIndex {
 
-    private final Map<NamespaceId, CandidateFlags> bySprite;
-    private final Map<String, CandidateFlags> byBlock;
+    private static final CtmRule[] NO_RULES = new CtmRule[0];
+    private static final int FACE_COUNT = 6;
+
+    private final Map<NamespaceId, CtmRule[][]> bySprite;
+    private final Map<String, CtmRule[][]> byBlock;
     private final boolean hasOverlayCandidates;
 
-    CtmRenderIndex(Map<NamespaceId, CandidateFlags> bySprite,
-                   Map<String, CandidateFlags> byBlock,
+    CtmRenderIndex(Map<NamespaceId, CtmRule[][]> bySprite,
+                   Map<String, CtmRule[][]> byBlock,
                    boolean hasOverlayCandidates) {
-        this.bySprite = Map.copyOf(bySprite);
-        this.byBlock = Map.copyOf(byBlock);
+        this.bySprite = copy(bySprite);
+        this.byBlock = copy(byBlock);
         this.hasOverlayCandidates = hasOverlayCandidates;
     }
 
@@ -43,16 +46,36 @@ public final class CtmRenderIndex {
      * Returns {@code true} when the sprite has any rule candidate for a face.
      */
     public boolean hasSpriteCandidate(NamespaceId sprite, int face) {
-        CandidateFlags flags = sprite == null ? null : bySprite.get(sprite);
-        return flags != null && flags.matchesFace(face);
+        return spriteCandidates(sprite, face).length != 0;
     }
 
     /**
      * Returns {@code true} when the block has any rule candidate for a face.
      */
     public boolean hasBlockCandidate(String blockId, int face) {
-        CandidateFlags flags = blockId == null ? null : byBlock.get(blockId);
-        return flags != null && flags.matchesFace(face);
+        return blockCandidates(blockId, face).length != 0;
+    }
+
+    /**
+     * Returns face-filtered sprite candidates in final rule priority order.
+     */
+    public CtmRule[] spriteCandidates(NamespaceId sprite, int face) {
+        if (sprite == null || face < Faces.DOWN || face > Faces.EAST) {
+            return NO_RULES;
+        }
+        CtmRule[][] byFace = bySprite.get(sprite);
+        return byFace == null ? NO_RULES : byFace[face];
+    }
+
+    /**
+     * Returns face-filtered block candidates in final rule priority order.
+     */
+    public CtmRule[] blockCandidates(String blockId, int face) {
+        if (blockId == null || face < Faces.DOWN || face > Faces.EAST) {
+            return NO_RULES;
+        }
+        CtmRule[][] byFace = byBlock.get(blockId);
+        return byFace == null ? NO_RULES : byFace[face];
     }
 
     /**
@@ -65,6 +88,49 @@ public final class CtmRenderIndex {
     static CandidateFlags flagsFor(CtmRule rule) {
         Objects.requireNonNull(rule, "rule");
         return new CandidateFlags(rule.facesMask(), rule.method().isOverlay());
+    }
+
+    static CtmRule[][] byFace(java.util.List<CtmRule> rules) {
+        @SuppressWarnings("unchecked")
+        java.util.ArrayList<CtmRule>[] mutable =
+                new java.util.ArrayList[FACE_COUNT];
+        for (CtmRule rule : rules) {
+            int mask = rule.facesMask() == 0 ? CandidateFlags.ALL_FACES
+                    : rule.facesMask() & CandidateFlags.ALL_FACES;
+            for (int face = Faces.DOWN; face <= Faces.EAST; face++) {
+                if ((mask & (1 << face)) == 0) {
+                    continue;
+                }
+                java.util.ArrayList<CtmRule> list = mutable[face];
+                if (list == null) {
+                    list = new java.util.ArrayList<>();
+                    mutable[face] = list;
+                }
+                list.add(rule);
+            }
+        }
+        CtmRule[][] out = new CtmRule[FACE_COUNT][];
+        for (int face = Faces.DOWN; face <= Faces.EAST; face++) {
+            java.util.ArrayList<CtmRule> list = mutable[face];
+            out[face] = list == null ? NO_RULES : list.toArray(NO_RULES);
+        }
+        return out;
+    }
+
+    private static <K> Map<K, CtmRule[][]> copy(Map<K, CtmRule[][]> input) {
+        java.util.HashMap<K, CtmRule[][]> out = new java.util.HashMap<>();
+        for (Map.Entry<K, CtmRule[][]> entry : input.entrySet()) {
+            CtmRule[][] faces = entry.getValue();
+            CtmRule[][] copied = new CtmRule[FACE_COUNT][];
+            for (int face = Faces.DOWN; face <= Faces.EAST; face++) {
+                CtmRule[] rules = faces[face];
+                copied[face] = rules.length == 0
+                        ? NO_RULES
+                        : java.util.Arrays.copyOf(rules, rules.length);
+            }
+            out.put(entry.getKey(), copied);
+        }
+        return Map.copyOf(out);
     }
 
     /**

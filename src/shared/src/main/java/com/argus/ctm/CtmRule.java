@@ -6,8 +6,10 @@ import com.argus.resource.RangeListInt;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * One parsed CTM rule. Immutable. The renderer-side engine (Phase 2/3)
@@ -60,9 +62,12 @@ public final class CtmRule {
     private final CtmMethod method;
     private final List<NamespaceId> matchTiles;
     private final List<BlockSpec> matchBlocks;
+    private final String[] matchBlockIds;
     private final ConnectMode connect;
     private final List<NamespaceId> connectTiles;
+    private final String[] connectTileBlockFallbackIds;
     private final List<BlockSpec> connectBlocks;
+    private final String[] connectBlockIds;
     private final int facesMask;          // bit 0..5: D/U/N/S/W/E, or 0 for "all"
     private final List<String> biomes;
     private final RangeListInt heights;
@@ -84,9 +89,13 @@ public final class CtmRule {
         this.method = b.method;
         this.matchTiles = List.copyOf(b.matchTiles);
         this.matchBlocks = List.copyOf(b.matchBlocks);
+        this.matchBlockIds = blockIds(this.matchBlocks);
         this.connect = b.connect;
         this.connectTiles = List.copyOf(b.connectTiles);
+        this.connectTileBlockFallbackIds =
+                connectTileBlockFallbackIds(this.connectTiles);
         this.connectBlocks = List.copyOf(b.connectBlocks);
+        this.connectBlockIds = blockIds(this.connectBlocks);
         this.facesMask = b.facesMask;
         this.biomes = List.copyOf(b.biomes);
         this.heights = b.heights;
@@ -117,6 +126,10 @@ public final class CtmRule {
         return matchBlocks;
     }
 
+    String[] matchBlockIds() {
+        return matchBlockIds;
+    }
+
     public ConnectMode connect() {
         return connect;
     }
@@ -125,8 +138,16 @@ public final class CtmRule {
         return connectTiles;
     }
 
+    String[] connectTileBlockFallbackIds() {
+        return connectTileBlockFallbackIds;
+    }
+
     public List<BlockSpec> connectBlocks() {
         return connectBlocks;
+    }
+
+    String[] connectBlockIds() {
+        return connectBlockIds;
     }
 
     public int facesMask() {
@@ -195,6 +216,39 @@ public final class CtmRule {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    private static String[] blockIds(List<BlockSpec> blocks) {
+        if (blocks.isEmpty()) {
+            return new String[0];
+        }
+        String[] ids = new String[blocks.size()];
+        for (int i = 0; i < blocks.size(); i++) {
+            BlockSpec block = blocks.get(i);
+            ids[i] = block.namespace() + ":" + block.name();
+        }
+        return ids;
+    }
+
+    private static String[] connectTileBlockFallbackIds(
+            List<NamespaceId> tiles) {
+        if (tiles.isEmpty()) {
+            return new String[0];
+        }
+        Set<String> ids = new LinkedHashSet<>();
+        for (NamespaceId tile : tiles) {
+            String path = tile.path();
+            if (!path.startsWith("block/") || path.length() <= 6) {
+                continue;
+            }
+            String name = path.substring(6);
+            String namespace = tile.namespace();
+            ids.add(namespace + ":" + name);
+            if (!name.endsWith("_block")) {
+                ids.add(namespace + ":" + name + "_block");
+            }
+        }
+        return ids.toArray(String[]::new);
     }
 
     /**

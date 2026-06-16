@@ -2,8 +2,6 @@ package com.argus.ctm;
 
 import com.argus.resource.NamespaceId;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -29,6 +27,8 @@ import java.util.Objects;
 public final class CtmRenderResolver {
 
     private final CtmRegistry registry;
+    private final CtmSelector selector =
+            new CtmSelector(CtmRuleSet.empty());
 
     public CtmRenderResolver(CtmRegistry registry) {
         this.registry = Objects.requireNonNull(registry, "registry");
@@ -59,33 +59,54 @@ public final class CtmRenderResolver {
                                      NeighborView view,
                                      int x, int y, int z,
                                      int face) {
+        CtmRenderScratch scratch = new CtmRenderScratch();
+        return resolveInto(blockId, baseSprite, view, x, y, z, face, scratch)
+                ? scratch.toPlan()
+                : null;
+    }
+
+    /**
+     * Resolves applicable CTM render work into caller-owned storage.
+     *
+     * <p>Performance: HOT PATH. Allocation policy: no plan/list allocation in
+     * this method; selections selected by the shared selector remain immutable.
+     */
+    public boolean resolveInto(String blockId,
+                               NamespaceId baseSprite,
+                               NeighborView view,
+                               int x, int y, int z,
+                               int face,
+                               CtmRenderScratch out) {
+        Objects.requireNonNull(out, "out");
+        out.clear();
         if (blockId == null || baseSprite == null || view == null) {
-            return null;
+            return false;
         }
         CtmRuleSet ruleSet = registry.ruleSet();
-        if (!ruleSet.renderIndex().hasCandidate(baseSprite, blockId, face)) {
-            return null;
+        CtmRenderIndex index = ruleSet.renderIndex();
+        CtmRule[] spriteRules = index.spriteCandidates(baseSprite, face);
+        CtmRule[] blockRules = index.blockCandidates(blockId, face);
+        if (spriteRules.length == 0 && blockRules.length == 0) {
+            return false;
         }
-        CtmSelector selector = new CtmSelector(ruleSet);
-        ArrayList<CtmOverlayTile> overlays = new ArrayList<>(4);
+
         CtmRenderSelection selection = collectFromRules(
                 selector,
-                ruleSet.rulesForSprite(baseSprite),
-                view, x, y, z, face, baseSprite, overlays);
+                spriteRules,
+                view, x, y, z, face, baseSprite, out);
         if (selection != null) {
-            return CtmRenderPlan.of(selection, overlays);
+            out.setReplacement(selection);
+            return true;
         }
         selection = collectFromRules(
                 selector,
-                ruleSet.rulesForBlock(blockId),
-                view, x, y, z, face, baseSprite, overlays);
+                blockRules,
+                view, x, y, z, face, baseSprite, out);
         if (selection != null) {
-            return CtmRenderPlan.of(selection, overlays);
+            out.setReplacement(selection);
+            return true;
         }
-        if (!overlays.isEmpty()) {
-            return CtmRenderPlan.overlays(overlays);
-        }
-        return null;
+        return out.hasOverlays();
     }
 
     /**
@@ -110,15 +131,18 @@ public final class CtmRenderResolver {
 
     private static CtmRenderSelection collectFromRules(
             CtmSelector selector,
-            List<CtmRule> rules,
+            CtmRule[] rules,
             NeighborView view,
             int x, int y, int z,
             int face,
             NamespaceId baseSprite,
-            ArrayList<CtmOverlayTile> overlays) {
+            CtmRenderScratch out) {
         for (CtmRule rule : rules) {
-            if (rule.method().isOverlay()
-                    && !selector.maySelectConnectedOverlay(rule, view, face)) {
+            if (rule.method().isOverlay()) {
+                if (!selector.maySelectConnectedOverlay(rule, view, face)) {
+                    continue;
+                }
+                selector.selectOverlayInto(rule, view, x, y, z, face, out);
                 continue;
             }
             CtmRenderSelection selection = selector.selectRender(
@@ -126,11 +150,7 @@ public final class CtmRenderResolver {
             if (selection == null || selection.isPrimarySkip()) {
                 continue;
             }
-            if (selection.isOverlay()) {
-                overlays.addAll(selection.overlayTiles());
-            } else {
-                return selection;
-            }
+            return selection;
         }
         return null;
     }

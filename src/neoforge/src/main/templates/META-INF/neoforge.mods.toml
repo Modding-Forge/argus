@@ -1,0 +1,38 @@
+license="${mod_license}"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="The Argus Contributors"
+description='''
+Stable beta Sodium-native OptiFine resource pack compatibility for NeoForge.
+Existing packs work without bridge layers; use EMF/ETF for entity models and animations.
+'''
+
+[[mixins]]
+config="argus.client.mixins.json"
+
+[modproperties.${mod_id}]
+"sodium:config_api_user"="com.argus.client.sodium.ArgusSodiumConfigEntryPoint"
+
+[[dependencies.${mod_id}]]
+modId="neoforge"
+type="required"
+versionRange="[${neo_version},)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.${mod_id}]]
+modId="minecraft"
+type="required"
+versionRange="${minecraft_version_range}"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.${mod_id}]]
+modId="sodium"
+type="required"
+versionRange="${sodium_version_range}"
+ordering="AFTER"
+side="CLIENT"

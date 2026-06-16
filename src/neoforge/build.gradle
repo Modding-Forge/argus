@@ -1,18 +1,193 @@
-// INTENTIONALLY INVALID BUILD FILE.
-//
-// This file exists to make sure that if anyone adds `include 'neoforge'`
-// to the root `settings.gradle` before a real NeoForge toolchain for
-// Minecraft 26.2-pre-4 is available, Gradle will fail loudly with the
-// message below rather than silently pulling in a wrong-version
-// NeoForge dependency.
-//
-// DO NOT `include 'neoforge'` in settings.gradle until the stub has
-// been replaced with a real ModDevGradle-based build file. See
-// `neoforge/README_STUB.md`.
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.0.141'
+}
 
-throw new GradleException(
-    "neoforge/ is a stub. A real NeoForge 26.2-pre-4 toolchain is not " +
-    "available yet. Remove this file, set up a real ModDevGradle build, " +
-    "and only then add `include 'neoforge'` to settings.gradle. " +
-    "See neoforge/README_STUB.md for details."
-);
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = "${project.mod_id}-neoforge"
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(
+        project.java_release as int)
+
+sourceSets {
+    main {
+        java.srcDir rootProject.file('src/client/src/main/java')
+        resources.srcDir rootProject.file('src/client/src/main/resources')
+    }
+}
+
+repositories {
+    maven {
+        name = 'CaffeineMC'
+        url = 'https://maven.caffeinemc.net/releases'
+    }
+    mavenCentral()
+}
+
+neoForge {
+    version = project.neo_version
+
+    runs {
+        client {
+            client()
+            gameDirectory = project.file('run')
+            systemProperty 'neoforge.enabledGameTestNamespaces',
+                    project.mod_id
+        }
+        configureEach {
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+
+    mods {
+        "${project.mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+    sodiumNestedCompile
+}
+
+dependencies {
+    implementation project(':src:shared')
+    sodiumNestedCompile "net.caffeinemc:sodium-neoforge:${project.sodium_neoforge_version}"
+    implementation "net.caffeinemc:sodium-neoforge:${project.sodium_neoforge_version}"
+    implementation 'io.github.llamalad7:mixinextras-neoforge:0.5.4'
+}
+
+def extractedSodiumJar = layout.buildDirectory.file(
+        "extracted/META-INF/jarjar/sodium-neoforge-mod.jar")
+
+tasks.register('extractSodiumNeoForgeModJar', Copy) {
+    from {
+        zipTree(configurations.sodiumNestedCompile.singleFile)
+    }
+    include 'META-INF/jarjar/*-mod.jar'
+    rename { 'sodium-neoforge-mod.jar' }
+    into layout.buildDirectory.dir("extracted")
+}
+
+dependencies {
+    compileOnly files(extractedSodiumJar)
+}
+
+tasks.named('compileJava') {
+    dependsOn tasks.named('extractSodiumNeoForgeModJar')
+}
+
+var generateModMetadata = tasks.register("generateModMetadata",
+        ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : project.minecraft_version,
+            minecraft_version_range: project.minecraft_version_range,
+            neo_version            : project.neo_version,
+            sodium_version_range   : project.sodium_version_range,
+            mod_id                 : project.mod_id,
+            mod_name               : 'Argus',
+            mod_license            : 'PolyForm-Shield-1.0.0',
+            mod_version            : project.mod_version,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into layout.buildDirectory.dir("generated/sources/modMetadata")
+}
+
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+def fabricSavesDir = rootProject.file('src/fabric/run/saves')
+def neoforgeSavesDir = project.file('run/saves')
+
+tasks.register('syncNeoForgeSavesWithFabric') {
+    group = 'development'
+    description = 'Dev-only: links NeoForge saves to the Fabric run saves folder.'
+
+    doLast {
+        if (!fabricSavesDir.exists()) {
+            fabricSavesDir.mkdirs()
+        }
+        if (neoforgeSavesDir.exists()) {
+            if (neoforgeSavesDir.canonicalFile == fabricSavesDir.canonicalFile) {
+                return
+            }
+            def existing = neoforgeSavesDir.toPath()
+            if (java.nio.file.Files.isSymbolicLink(existing)) {
+                java.nio.file.Files.delete(existing)
+            } else {
+                def attrs = java.nio.file.Files.readAttributes(
+                        existing,
+                        java.nio.file.attribute.BasicFileAttributes)
+                if (attrs.isOther()) {
+                    return
+                }
+                def backup = project.file("run/saves.backup-${new Date().format('yyyyMMdd-HHmmss')}")
+                logger.lifecycle("Backing up existing NeoForge saves to ${backup}")
+                java.nio.file.Files.move(existing, backup.toPath())
+            }
+        }
+        neoforgeSavesDir.parentFile.mkdirs()
+        if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+            exec {
+                commandLine 'cmd', '/c', 'mklink', '/J',
+                        neoforgeSavesDir.absolutePath,
+                        fabricSavesDir.absolutePath
+            }
+        } else {
+            java.nio.file.Files.createSymbolicLink(
+                    neoforgeSavesDir.toPath(),
+                    fabricSavesDir.toPath())
+        }
+    }
+}
+
+tasks.matching { it.name == 'runClient' || it.name == 'runClientData' }
+        .configureEach {
+            dependsOn tasks.named('syncNeoForgeSavesWithFabric')
+        }
+
+processResources {
+    inputs.property 'mod_id', project.mod_id
+    inputs.property 'mod_name', 'Argus'
+    inputs.property 'mod_version', project.mod_version
+    inputs.property 'minecraft_version', project.minecraft_version
+    inputs.property 'neo_version', project.neo_version
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = project.java_release as int
+    options.encoding = 'UTF-8'
+}
+
+def argusBenchmarkProperties = [
+        'argus.benchmark',
+        'argus.benchmark.autopilot',
+        'argus.benchmark.autopilotTicks',
+        'argus.benchmark.closeOnComplete',
+        'argus.benchmark.closeDelayTicks',
+        'argus.benchmark.world',
+]
+
+tasks.withType(JavaExec).configureEach { task ->
+    if (task.name == 'runClient') {
+        argusBenchmarkProperties.each { key ->
+            def value = System.getProperty(key)
+            if (value != null) {
+                systemProperty key, value
+            }
+        }
+    }
+}
+
+tasks.withType(Jar).configureEach {
+    from(project(':src:shared').sourceSets.main.output)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

@@ -48,6 +48,63 @@ import java.util.List;
  */
 public final class CtmSelector {
 
+    private static final int[][][] OVERLAY_SIDE_OFFSETS = {
+            {
+                    { -1, 0, 0 }, { 1, 0, 0 },
+                    { 0, 0, -1 }, { 0, 0, 1 }
+            },
+            {
+                    { -1, 0, 0 }, { 1, 0, 0 },
+                    { 0, 0, 1 }, { 0, 0, -1 }
+            },
+            {
+                    { 1, 0, 0 }, { -1, 0, 0 },
+                    { 0, -1, 0 }, { 0, 1, 0 }
+            },
+            {
+                    { -1, 0, 0 }, { 1, 0, 0 },
+                    { 0, -1, 0 }, { 0, 1, 0 }
+            },
+            {
+                    { 0, 0, -1 }, { 0, 0, 1 },
+                    { 0, -1, 0 }, { 0, 1, 0 }
+            },
+            {
+                    { 0, 0, 1 }, { 0, 0, -1 },
+                    { 0, -1, 0 }, { 0, 1, 0 }
+            }
+    };
+
+    private static final int[][][] OVERLAY_EDGE_OFFSETS = {
+            {
+                    { 1, 0, -1 }, { -1, 0, -1 },
+                    { 1, 0, 1 }, { -1, 0, 1 }
+            },
+            {
+                    { 1, 0, 1 }, { -1, 0, 1 },
+                    { 1, 0, -1 }, { -1, 0, -1 }
+            },
+            {
+                    { -1, -1, 0 }, { 1, -1, 0 },
+                    { -1, 1, 0 }, { 1, 1, 0 }
+            },
+            {
+                    { 1, -1, 0 }, { -1, -1, 0 },
+                    { 1, 1, 0 }, { -1, 1, 0 }
+            },
+            {
+                    { 0, -1, 1 }, { 0, -1, -1 },
+                    { 0, 1, 1 }, { 0, 1, -1 }
+            },
+            {
+                    { 0, -1, -1 }, { 0, -1, 1 },
+                    { 0, 1, -1 }, { 0, 1, 1 }
+            }
+    };
+
+    private static final List<Integer>[] OVERLAY_TILE_CACHE =
+            buildOverlayTileCache();
+
     private final CtmRuleSet ruleSet;
 
     public CtmSelector(CtmRuleSet ruleSet) {
@@ -189,6 +246,42 @@ public final class CtmSelector {
             return null;
         }
         return CtmRenderSelection.from(rule, face, baseSprite, primary, null);
+    }
+
+    /**
+     * Selects overlay tiles directly into caller-owned render storage.
+     *
+     * <p>Performance: HOT PATH. Allocation policy: only the selected
+     * {@link CtmOverlayTile} records stored in the output buffer.
+     */
+    public boolean selectOverlayInto(CtmRule rule,
+                                     NeighborView view,
+                                     int x, int y, int z,
+                                     int face,
+                                     CtmRenderScratch out) {
+        if (rule == null || view == null || out == null) {
+            return false;
+        }
+        if (!isOverlay(rule.method())) {
+            return false;
+        }
+        if (rule.method() == CtmMethod.OVERLAY
+                || rule.method() == CtmMethod.OVERLAY_CTM) {
+            List<Integer> tiles = selectOverlayTiles(rule, view, face);
+            for (int i = 0; i < tiles.size(); i++) {
+                int tile = tiles.get(i);
+                if (tile >= 0) {
+                    out.addOverlay(rule, tile);
+                }
+            }
+            return !tiles.isEmpty();
+        }
+        CtmSelectionResult result = select(rule, view, x, y, z, face);
+        if (result == null || !result.isConcrete()) {
+            return false;
+        }
+        out.addOverlay(rule, result.tileIndex());
+        return true;
     }
 
     /**
@@ -482,6 +575,15 @@ public final class CtmSelector {
     private static List<Integer> overlayTileIndices(int sideMask,
                                                     int edgeMask,
                                                     int baseSideMask) {
+        int index = ((sideMask & 0xF) << 8)
+                | ((edgeMask & 0xF) << 4)
+                | (baseSideMask & 0xF);
+        return OVERLAY_TILE_CACHE[index];
+    }
+
+    private static List<Integer> buildOverlayTileIndices(int sideMask,
+                                                         int edgeMask,
+                                                         int baseSideMask) {
         int sides = sideMask & 0xF;
         if (sides == 0) {
             return overlayDiagonalOnlyTiles(edgeMask, baseSideMask);
@@ -501,6 +603,21 @@ public final class CtmSelector {
         addOverlayEdgeCorners(tiles, edgeMask, sides | baseSideMask);
         addOverlayBaseCapCorners(tiles, sides, baseSideMask);
         return tiles;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Integer>[] buildOverlayTileCache() {
+        List<Integer>[] cache = new List[16 * 16 * 16];
+        for (int side = 0; side < 16; side++) {
+            for (int edge = 0; edge < 16; edge++) {
+                for (int base = 0; base < 16; base++) {
+                    int index = (side << 8) | (edge << 4) | base;
+                    cache[index] = List.copyOf(
+                            buildOverlayTileIndices(side, edge, base));
+                }
+            }
+        }
+        return cache;
     }
 
     private static List<Integer> overlayDiagonalOnlyTiles(int edgeMask,
@@ -817,16 +934,9 @@ public final class CtmSelector {
 
     private static boolean matchesAnyMatchBlock(CtmRule rule,
                                                 String neighbourBlockId) {
-        int colon = neighbourBlockId.indexOf(':');
-        String namespace = colon < 0
-                ? NamespaceId.DEFAULT_NAMESPACE
-                : neighbourBlockId.substring(0, colon);
-        String name = colon < 0
-                ? neighbourBlockId
-                : neighbourBlockId.substring(colon + 1);
-        for (BlockSpec block : rule.matchBlocks()) {
-            if (block.namespace().equals(namespace)
-                    && block.name().equals(name)) {
+        String id = normalizedBlockId(neighbourBlockId);
+        for (String blockId : rule.matchBlockIds()) {
+            if (blockId.equals(id)) {
                 return true;
             }
         }
@@ -834,77 +944,26 @@ public final class CtmSelector {
     }
 
     private static int[][] overlaySideOffsets(int face) {
-        return switch (face) {
-            case Faces.DOWN -> new int[][] {
-                    { -1, 0, 0 }, { 1, 0, 0 },
-                    { 0, 0, -1 }, { 0, 0, 1 }
-            };
-            case Faces.UP -> new int[][] {
-                    { -1, 0, 0 }, { 1, 0, 0 },
-                    { 0, 0, 1 }, { 0, 0, -1 }
-            };
-            case Faces.NORTH -> new int[][] {
-                    { 1, 0, 0 }, { -1, 0, 0 },
-                    { 0, -1, 0 }, { 0, 1, 0 }
-            };
-            case Faces.SOUTH -> new int[][] {
-                    { -1, 0, 0 }, { 1, 0, 0 },
-                    { 0, -1, 0 }, { 0, 1, 0 }
-            };
-            case Faces.WEST -> new int[][] {
-                    { 0, 0, -1 }, { 0, 0, 1 },
-                    { 0, -1, 0 }, { 0, 1, 0 }
-            };
-            case Faces.EAST -> new int[][] {
-                    { 0, 0, 1 }, { 0, 0, -1 },
-                    { 0, -1, 0 }, { 0, 1, 0 }
-            };
-            default -> throw new IllegalArgumentException("bad face: " + face);
-        };
+        checkFace(face);
+        return OVERLAY_SIDE_OFFSETS[face];
     }
 
     private static int[][] overlayEdgeOffsets(int face) {
-        return switch (face) {
-            case Faces.DOWN -> new int[][] {
-                    { 1, 0, -1 }, { -1, 0, -1 },
-                    { 1, 0, 1 }, { -1, 0, 1 }
-            };
-            case Faces.UP -> new int[][] {
-                    { 1, 0, 1 }, { -1, 0, 1 },
-                    { 1, 0, -1 }, { -1, 0, -1 }
-            };
-            case Faces.NORTH -> new int[][] {
-                    { -1, -1, 0 }, { 1, -1, 0 },
-                    { -1, 1, 0 }, { 1, 1, 0 }
-            };
-            case Faces.SOUTH -> new int[][] {
-                    { 1, -1, 0 }, { -1, -1, 0 },
-                    { 1, 1, 0 }, { -1, 1, 0 }
-            };
-            case Faces.WEST -> new int[][] {
-                    { 0, -1, 1 }, { 0, -1, -1 },
-                    { 0, 1, 1 }, { 0, 1, -1 }
-            };
-            case Faces.EAST -> new int[][] {
-                    { 0, -1, -1 }, { 0, -1, 1 },
-                    { 0, 1, -1 }, { 0, 1, 1 }
-            };
-            default -> throw new IllegalArgumentException("bad face: " + face);
-        };
+        checkFace(face);
+        return OVERLAY_EDGE_OFFSETS[face];
+    }
+
+    private static void checkFace(int face) {
+        if (face < Faces.DOWN || face > Faces.EAST) {
+            throw new IllegalArgumentException("bad face: " + face);
+        }
     }
 
     private static boolean matchesAnyConnectBlock(CtmRule rule,
                                                   String neighbourBlockId) {
-        int colon = neighbourBlockId.indexOf(':');
-        String namespace = colon < 0
-                ? NamespaceId.DEFAULT_NAMESPACE
-                : neighbourBlockId.substring(0, colon);
-        String name = colon < 0
-                ? neighbourBlockId
-                : neighbourBlockId.substring(colon + 1);
-        for (BlockSpec block : rule.connectBlocks()) {
-            if (block.namespace().equals(namespace)
-                    && block.name().equals(name)) {
+        String id = normalizedBlockId(neighbourBlockId);
+        for (String blockId : rule.connectBlockIds()) {
+            if (blockId.equals(id)) {
                 return true;
             }
         }
@@ -921,27 +980,19 @@ public final class CtmSelector {
         if (neighbourBlockId == null) {
             return false;
         }
-        int colon = neighbourBlockId.indexOf(':');
-        String namespace = colon < 0
-                ? NamespaceId.DEFAULT_NAMESPACE
-                : neighbourBlockId.substring(0, colon);
-        String name = colon < 0
-                ? neighbourBlockId
-                : neighbourBlockId.substring(colon + 1);
-        String basePath = "block/" + name;
-        String compactBlockPath = name.endsWith("_block")
-                ? "block/" + name.substring(0, name.length() - 6)
-                : null;
-        for (NamespaceId tile : rule.connectTiles()) {
-            if (!tile.namespace().equals(namespace)) {
-                continue;
-            }
-            String path = tile.path();
-            if (path.equals(basePath)
-                    || path.equals(compactBlockPath)) {
+        String id = normalizedBlockId(neighbourBlockId);
+        for (String blockId : rule.connectTileBlockFallbackIds()) {
+            if (blockId.equals(id)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static String normalizedBlockId(String blockId) {
+        if (blockId.indexOf(':') >= 0) {
+            return blockId;
+        }
+        return NamespaceId.DEFAULT_NAMESPACE + ":" + blockId;
     }
 }

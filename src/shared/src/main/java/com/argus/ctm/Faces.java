@@ -30,6 +30,51 @@ public final class Faces {
     public static final int WEST  = 4;
     public static final int EAST  = 5;
 
+    private static final int[][] DELTAS = {
+            { 0, -1, 0 },
+            { 0,  1, 0 },
+            { 0,  0, -1 },
+            { 0,  0,  1 },
+            { -1, 0, 0 },
+            {  1, 0, 0 }
+    };
+
+    private static final int[][] ORTHOGONAL_SIDES = {
+            { WEST, EAST, NORTH, SOUTH },
+            { WEST, EAST, NORTH, SOUTH },
+            { WEST, EAST, UP, DOWN },
+            { WEST, EAST, UP, DOWN },
+            { NORTH, SOUTH, UP, DOWN },
+            { NORTH, SOUTH, UP, DOWN }
+    };
+
+    private static final int[][][] DIAGONALS = {
+            {
+                    { -1, 0, -1 }, { -1, 0,  1 },
+                    {  1, 0, -1 }, {  1, 0,  1 }
+            },
+            {
+                    { -1, 0, -1 }, { -1, 0,  1 },
+                    {  1, 0, -1 }, {  1, 0,  1 }
+            },
+            {
+                    { -1,  1, 0 }, { -1, -1, 0 },
+                    {  1,  1, 0 }, {  1, -1, 0 }
+            },
+            {
+                    { -1,  1, 0 }, { -1, -1, 0 },
+                    {  1,  1, 0 }, {  1, -1, 0 }
+            },
+            {
+                    { 0,  1, -1 }, { 0, -1, -1 },
+                    { 0,  1,  1 }, { 0, -1,  1 }
+            },
+            {
+                    { 0,  1, -1 }, { 0, -1, -1 },
+                    { 0,  1,  1 }, { 0, -1,  1 }
+            }
+    };
+
     private Faces() {}
 
     /**
@@ -37,15 +82,23 @@ public final class Faces {
      * {@code (dx, dy, dz)} offsets suitable for a {@link NeighborView}.
      */
     public static int[] delta(int face) {
-        return switch (face) {
-            case DOWN  -> new int[] { 0, -1, 0 };
-            case UP    -> new int[] { 0,  1, 0 };
-            case NORTH -> new int[] { 0, 0, -1 };
-            case SOUTH -> new int[] { 0, 0,  1 };
-            case WEST  -> new int[] { -1, 0, 0 };
-            case EAST  -> new int[] {  1, 0, 0 };
-            default -> throw new IllegalArgumentException("bad face: " + face);
-        };
+        checkFace(face);
+        return DELTAS[face];
+    }
+
+    public static int deltaX(int face) {
+        checkFace(face);
+        return DELTAS[face][0];
+    }
+
+    public static int deltaY(int face) {
+        checkFace(face);
+        return DELTAS[face][1];
+    }
+
+    public static int deltaZ(int face) {
+        checkFace(face);
+        return DELTAS[face][2];
     }
 
     /**
@@ -65,12 +118,8 @@ public final class Faces {
      * the same bit meaning before reaching {@link TileIndexTable}.
      */
     public static int[] orthogonalSides(int face) {
-        return switch (face) {
-            case DOWN, UP -> new int[] { WEST, EAST, NORTH, SOUTH };
-            case NORTH, SOUTH -> new int[] { WEST, EAST, UP, DOWN };
-            case WEST, EAST -> new int[] { NORTH, SOUTH, UP, DOWN };
-            default -> throw new IllegalArgumentException("bad face: " + face);
-        };
+        checkFace(face);
+        return ORTHOGONAL_SIDES[face];
     }
 
     /**
@@ -91,20 +140,13 @@ public final class Faces {
      * bits 1 and 3.
      */
     public static int[][] diagonals(int face) {
-        return switch (face) {
-            case DOWN, UP -> new int[][] {
-                    { -1, 0, -1 }, { -1, 0,  1 },
-                    {  1, 0, -1 }, {  1, 0,  1 }
-            };
-            case NORTH, SOUTH -> new int[][] {
-                    { -1,  1, 0 }, { -1, -1, 0 },
-                    {  1,  1, 0 }, {  1, -1, 0 }
-            };
-            case WEST, EAST -> new int[][] {
-                    { 0,  1, -1 }, { 0, -1, -1 },
-                    { 0,  1,  1 }, { 0, -1,  1 }
-            };
-            default -> throw new IllegalArgumentException("bad face: " + face);
-        };
+        checkFace(face);
+        return DIAGONALS[face];
+    }
+
+    private static void checkFace(int face) {
+        if (face < DOWN || face > EAST) {
+            throw new IllegalArgumentException("bad face: " + face);
+        }
     }
 }

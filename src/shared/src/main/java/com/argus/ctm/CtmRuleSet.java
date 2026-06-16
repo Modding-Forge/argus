@@ -113,10 +113,6 @@ public final class CtmRuleSet {
             rules.sort(RULE_ORDER);
             Map<NamespaceId, List<CtmRule>> mutableBySprite = new HashMap<>();
             Map<String, List<CtmRule>> mutableByBlock = new HashMap<>();
-            Map<NamespaceId, CtmRenderIndex.CandidateFlags> spriteFlags =
-                    new HashMap<>();
-            Map<String, CtmRenderIndex.CandidateFlags> blockFlags =
-                    new HashMap<>();
             boolean hasOverlayCandidates = false;
             for (CtmRule r : rules) {
                 CtmRenderIndex.CandidateFlags flags =
@@ -124,14 +120,10 @@ public final class CtmRuleSet {
                 hasOverlayCandidates |= flags.hasOverlay();
                 for (NamespaceId sprite : r.matchTiles()) {
                     mutableBySprite.computeIfAbsent(sprite, k -> new ArrayList<>()).add(r);
-                    spriteFlags.merge(sprite, flags,
-                            CtmRenderIndex.CandidateFlags::merge);
                 }
                 for (BlockSpec block : r.matchBlocks()) {
                     String key = block.namespace() + ":" + block.name();
                     mutableByBlock.computeIfAbsent(key, k -> new ArrayList<>()).add(r);
-                    blockFlags.merge(key, flags,
-                            CtmRenderIndex.CandidateFlags::merge);
                 }
             }
             // Phase 5: defensive copies + unmodifiable wrapping.
@@ -147,11 +139,17 @@ public final class CtmRuleSet {
             Map<String, List<CtmRule>> finalByBlock = new HashMap<>();
             mutableByBlock.forEach((k, v) -> finalByBlock.put(
                     k, Collections.unmodifiableList(v)));
+            Map<NamespaceId, CtmRule[][]> spriteCandidates = new HashMap<>();
+            mutableBySprite.forEach((k, v) -> spriteCandidates.put(
+                    k, CtmRenderIndex.byFace(v)));
+            Map<String, CtmRule[][]> blockCandidates = new HashMap<>();
+            mutableByBlock.forEach((k, v) -> blockCandidates.put(
+                    k, CtmRenderIndex.byFace(v)));
             return new CtmRuleSet(
                     Collections.unmodifiableMap(finalBySprite),
                     Collections.unmodifiableMap(finalByBlock),
                     Collections.unmodifiableList(rules),
-                    new CtmRenderIndex(spriteFlags, blockFlags,
+                    new CtmRenderIndex(spriteCandidates, blockCandidates,
                             hasOverlayCandidates));
         }
     }

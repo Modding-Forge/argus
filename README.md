@@ -2,7 +2,7 @@
 
 Argus Panoptes, the all-seeing giant of Greek mythology, had a hundred eyes and missed nothing.
 
-Argus is a Sodium-native Fabric client mod for OptiFine resource-pack compatibility on the modern Minecraft renderer path. No bridge mod, no wrapper layer, no old renderer detour: Argus implements the relevant resource-pack features directly where they render.
+Argus is a Sodium-native Fabric and NeoForge client mod for OptiFine resource-pack compatibility on the modern Minecraft renderer path. No bridge mod, no wrapper layer, no old renderer detour: Argus implements the relevant resource-pack features directly where they render.
 
 [![Get it on Modrinth](https://raw.githubusercontent.com/Modding-Forge/mf-nexus-modpage-assets/main/buttons/get_it_on_modrinth.png)](https://modrinth.com/mod/argus) [![Get it on Nexus Mods](https://raw.githubusercontent.com/Modding-Forge/mf-nexus-modpage-assets/main/buttons/get_it_on_nexus_mods.png)](https://www.nexusmods.com/minecraft/mods/1183) [![Get it on CurseForge](https://raw.githubusercontent.com/Modding-Forge/mf-nexus-modpage-assets/main/buttons/get_it_on_curseforge.png)](https://www.curseforge.com/minecraft/mc-mods/argus/)
 
@@ -42,13 +42,13 @@ Not implemented:
 
 - Entity model replacement and entity animation packs, including Fresh Animations-style CEM.
 - Dynamic Lighting. Use a dedicated Dynamic Lighting mod alongside Argus.
-- NeoForge support.
+- Vanilla terrain-renderer fallback.
 
 ## Status
 
 Argus targets real OptiFine resource packs, not synthetic demos only. CTM, Better Grass, Emissive, Custom Colors, Custom Sky, Custom Animations, Custom GUI, CIT, and Entity Texture support have all reached visible in-game paths, but parity is still being tightened feature by feature.
 
-Fabric/Sodium is the supported runtime today. NeoForge is planned once the Minecraft 26.2 toolchain is ready.
+Fabric/Sodium is the primary verified runtime today. NeoForge/Sodium now builds from the same shared client layer and is ready for runtime smoke testing.
 
 The current terrain path is a correctness-oriented Sodium quad path. It is not claimed as a final Vulkan-native renderer implementation.
 
@@ -58,32 +58,61 @@ For detailed phase status, see `plan/roadmap.md`.
 
 - Minecraft `26.2`
 - Java 25
-- Fabric Loader
-- Fabric API
 - Sodium
+- Fabric Loader + Fabric API, or NeoForge
 
-## Build
+## Development & Contributing
+
+Argus is developed against Fabric and NeoForge in parallel. Shared renderer or feature changes should build both loaders before they are considered ready.
+
+Build and test:
 
 ```powershell
 .\gradlew.bat :src:shared:test
-.\gradlew.bat :src:fabric:build
+.\gradlew.bat :src:fabric:build :src:neoforge:build
 ```
 
-The Fabric jar is written to `src/fabric/build/libs/`.
-
-## Run
+Run dev clients:
 
 ```powershell
 .\gradlew.bat :src:fabric:runClient
+.\gradlew.bat :src:neoforge:runClient
 ```
 
-Local test resource packs go into `src/fabric/run/resourcepacks/`.
+The Fabric jar is written to `src/fabric/build/libs/`; the NeoForge jar is written to `src/neoforge/build/libs/`.
+
+Local Fabric test resource packs go into `src/fabric/run/resourcepacks/`. The NeoForge dev run can share the Fabric save folder through the dev-only `syncNeoForgeSavesWithFabric` task.
+
+### Autopilot Benchmark
+
+Argus includes a dev-only autopilot benchmark for comparing Fabric and NeoForge with the same save and resource packs. It opens a local world, drives a deterministic movement/camera route, logs FPS plus renderer buckets, and closes the client after the final sample.
+
+Example Fabric run:
+
+```powershell
+.\gradlew.bat -Dargus.benchmark=true -Dargus.benchmark.autopilot=true -Dargus.benchmark.autopilotTicks=650 "-Dargus.benchmark.world=New World" :src:fabric:runClient
+```
+
+Example NeoForge run:
+
+```powershell
+.\gradlew.bat -Dargus.benchmark=true -Dargus.benchmark.autopilot=true -Dargus.benchmark.autopilotTicks=650 "-Dargus.benchmark.world=New World" :src:neoforge:runClient
+```
+
+Useful options:
+
+- `argus.benchmark.closeOnComplete=false`: keep the client open after the route.
+- `argus.benchmark.closeDelayTicks=40`: delay before automatic shutdown.
+- `argus.benchmark.world=<name>`: local save to open.
+
+For fair loader comparisons, restore the same save snapshot before each run and compare both logs, especially `sodium.ctm`, `ctm.resolve`, `ctm.prefilter`, `ctm.neighbor_view`, and FPS min/avg/max.
 
 ## Project Layout
 
 - `src/shared`: loader-agnostic parsers, config, feature models, matching logic, and JVM tests.
-- `src/fabric`: Fabric entrypoints, reload listeners, Minecraft adapters, Mixins, Sodium integration, atlas injection, and settings UI.
-- `src/neoforge`: TODO stub only.
+- `src/client`: shared Minecraft/Sodium client runtime, Mixins, reload listeners, atlas injection, renderers, and settings UI.
+- `src/fabric`: Fabric entrypoints, config path, reload/tick/builtin-pack bridges, and metadata.
+- `src/neoforge`: NeoForge entrypoints, config path, reload/tick/builtin-pack bridges, and metadata.
 - `plan/`: roadmap and implementation notes.
 
 ## Clean-Room Policy

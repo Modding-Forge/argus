@@ -9,6 +9,58 @@ plugins {
     id 'base'
 }
 
+tasks.register('checkSharedNoForbiddenImports') {
+    group = 'verification'
+    description = 'Ensures src/shared stays free of Minecraft, loader, Sodium, and Mixin imports.'
+
+    inputs.files(fileTree('src/shared/src/main/java') {
+        include '**/*.java'
+    })
+
+    doLast {
+        def forbidden = ~/^import\s+(net\.minecraft|net\.fabricmc|net\.neoforged|net\.caffeinemc|org\.spongepowered)\./
+        def offenders = []
+        inputs.files.files.each { file ->
+            file.eachLine { line, number ->
+                if (line ==~ forbidden) {
+                    offenders << "${project.relativePath(file)}:${number}: ${line.trim()}"
+                }
+            }
+        }
+        if (!offenders.isEmpty()) {
+            throw new GradleException("Forbidden imports in src/shared:\n" + offenders.join('\n'))
+        }
+    }
+}
+
+tasks.register('checkClientNoLoaderImports') {
+    group = 'verification'
+    description = 'Ensures src/client stays free of Fabric and NeoForge imports.'
+
+    inputs.files(fileTree('src/client/src/main/java') {
+        include '**/*.java'
+    })
+
+    doLast {
+        def forbidden = ~/^import\s+(net\.fabricmc|net\.neoforged)\./
+        def offenders = []
+        inputs.files.files.each { file ->
+            file.eachLine { line, number ->
+                if (line ==~ forbidden) {
+                    offenders << "${project.relativePath(file)}:${number}: ${line.trim()}"
+                }
+            }
+        }
+        if (!offenders.isEmpty()) {
+            throw new GradleException("Loader imports in src/client:\n" + offenders.join('\n'))
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'checkSharedNoForbiddenImports', 'checkClientNoLoaderImports'
+}
+
 allprojects {
     group = project.maven_group
     version = project.mod_version

@@ -1,6 +1,10 @@
 pluginManagement {
     repositories {
         maven {
+            name = 'NeoForge'
+            url = 'https://maven.neoforged.net/releases/'
+        }
+        maven {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
@@ -12,11 +16,14 @@ pluginManagement {
 // All subprojects live under `src/`. We use the `src:<name>` syntax
 // so that the root directory stays clean (config, gradle wrapper, docs).
 //
-// Phase 0 modules:
-//   - src:shared   - loader-agnostic core (java-library), no Minecraft, no Fabric/NeoForge APIs
-//   - src:fabric   - Fabric loader shim + ModInitializer + ClientModInitializer (the jar we build)
-//   - src:neoforge - STUB ONLY - not included in this build; awaits a NeoForge 26.2 toolchain.
+// Modules and source layers:
+//   - src:shared   - loader-agnostic core, no Minecraft, no Fabric/NeoForge APIs
+//   - src:client   - shared Minecraft/Sodium client source layer, consumed by loaders
+//                    (not a standalone Gradle project)
+//   - src:fabric   - Fabric loader shim + metadata
+//   - src:neoforge - NeoForge loader shim + metadata
 rootProject.name = 'argus'
 
 include 'src:shared'
 include 'src:fabric'
+include 'src:neoforge'

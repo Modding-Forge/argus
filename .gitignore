@@ -43,3 +43,6 @@ AGENTS.md
 
 # Fabric
 src/fabric/run/
+
+# NeoForge
+src/neoforge/run/

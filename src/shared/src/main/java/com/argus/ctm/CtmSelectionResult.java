@@ -1,7 +1,5 @@
 package com.argus.ctm;
 
-import com.argus.resource.NamespaceId;
-
 /**
  * The result of a CTM tile-selection step.
  *
@@ -47,6 +45,14 @@ public final class CtmSelectionResult {
      */
     public static final int DEFAULT_INDEX = -2;
 
+    private static final int CACHE_SIZE = 512;
+    private static final CtmSelectionResult[] CONCRETE_CACHE =
+            concreteCache();
+    private static final CtmSelectionResult SKIP =
+            new CtmSelectionResult(SKIP_INDEX);
+    private static final CtmSelectionResult DEFAULT =
+            new CtmSelectionResult(DEFAULT_INDEX);
+
     private CtmSelectionResult(int tileIndex) {
         this.tileIndex = tileIndex;
     }
@@ -55,15 +61,17 @@ public final class CtmSelectionResult {
         if (index < 0) {
             throw new IllegalArgumentException("tile index must be >= 0");
         }
-        return new CtmSelectionResult(index);
+        return index < CONCRETE_CACHE.length
+                ? CONCRETE_CACHE[index]
+                : new CtmSelectionResult(index);
     }
 
     public static CtmSelectionResult skip() {
-        return new CtmSelectionResult(SKIP_INDEX);
+        return SKIP;
     }
 
     public static CtmSelectionResult useDefault() {
-        return new CtmSelectionResult(DEFAULT_INDEX);
+        return DEFAULT;
     }
 
     public int tileIndex() {
@@ -91,5 +99,13 @@ public final class CtmSelectionResult {
             return "CtmSelectionResult[DEFAULT]";
         }
         return "CtmSelectionResult[tile=" + tileIndex + "]";
+    }
+
+    private static CtmSelectionResult[] concreteCache() {
+        CtmSelectionResult[] out = new CtmSelectionResult[CACHE_SIZE];
+        for (int i = 0; i < out.length; i++) {
+            out[i] = new CtmSelectionResult(i);
+        }
+        return out;
     }
 }

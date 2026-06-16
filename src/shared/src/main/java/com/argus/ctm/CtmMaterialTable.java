@@ -126,14 +126,24 @@ public final class CtmMaterialTable {
      * Looks up a material for a concrete rule/tile pair.
      */
     public Optional<CtmMaterialEntry> find(CtmRule rule, int tileIndex) {
+        return Optional.ofNullable(findOrNull(rule, tileIndex));
+    }
+
+    /**
+     * Looks up a material for a concrete rule/tile pair.
+     *
+     * <p>Performance: HOT PATH. Allocation policy: none. Renderer code should
+     * use this method instead of {@link #find(CtmRule, int)}.
+     */
+    public CtmMaterialEntry findOrNull(CtmRule rule, int tileIndex) {
         if (rule == null || tileIndex < 0 || byRule.isEmpty()) {
-            return Optional.empty();
+            return null;
         }
         CtmMaterialEntry[] perTile = byRule.get(rule);
         if (perTile == null || tileIndex >= perTile.length) {
-            return Optional.empty();
+            return null;
         }
-        return Optional.ofNullable(perTile[tileIndex]);
+        return perTile[tileIndex];
     }
 
     /**

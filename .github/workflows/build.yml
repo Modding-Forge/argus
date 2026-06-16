@@ -40,11 +40,16 @@ jobs:
       - name: Build Fabric jar
         run: ./gradlew :src:fabric:build
 
+      - name: Build NeoForge jar
+        run: ./gradlew :src:neoforge:build
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: argus-fabric-${{ github.sha }}
-          path: src/fabric/build/libs/argus-*.jar
+          name: argus-loaders-${{ github.sha }}
+          path: |
+            src/fabric/build/libs/argus-fabric-*.jar
+            src/neoforge/build/libs/argus-neoforge-*.jar
           if-no-files-found: error
 
       - name: Publish GitHub release
@@ -52,6 +57,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Argus ${{ github.ref_name }}
-          files: src/fabric/build/libs/argus-*.jar
+          files: |
+            src/fabric/build/libs/argus-fabric-*.jar
+            src/neoforge/build/libs/argus-neoforge-*.jar
           fail_on_unmatched_files: true
           generate_release_notes: true

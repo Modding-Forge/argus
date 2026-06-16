@@ -48,6 +48,10 @@ loom {
     splitEnvironmentSourceSets()
     accessWidenerPath = file("src/main/resources/argus.accesswidener")
 
+    sourceSets.client.java.srcDir rootProject.file('src/client/src/main/java')
+    sourceSets.client.resources.srcDir rootProject.file(
+            'src/client/src/main/resources')
+
     mods {
         // The MOD_ID in fabric.mod.json is "argus". Each mod gets its
         // own (set of) source sets; for a single mod we use the default
@@ -147,6 +151,26 @@ tasks.withType(JavaCompile).configureEach {
     // runs Gradle.)
     options.release = project.java_release as int
     options.encoding = 'UTF-8'
+}
+
+def argusBenchmarkProperties = [
+        'argus.benchmark',
+        'argus.benchmark.autopilot',
+        'argus.benchmark.autopilotTicks',
+        'argus.benchmark.closeOnComplete',
+        'argus.benchmark.closeDelayTicks',
+        'argus.benchmark.world',
+]
+
+tasks.withType(JavaExec).configureEach { task ->
+    if (task.name == 'runClient') {
+        argusBenchmarkProperties.each { key ->
+            def value = System.getProperty(key)
+            if (value != null) {
+                systemProperty key, value
+            }
+        }
+    }
 }
 
 tasks.named('test') {
