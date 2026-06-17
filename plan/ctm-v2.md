@@ -1153,3 +1153,67 @@ Interpretation:
   wenigen effektiven Regeln betritt. Wichtig: Der bereits verworfene globale
   Empty-Filter-Fast-Return darf nicht einfach wiederholt werden; die neue
   Variante muss enger an diese gemessenen Kandidatenformen gebunden sein.
+
+## Overlay Reject Diagnostics 2026-06-17
+
+Status: **implementiert und auf beiden Loadern benchmark-verifiziert.**
+
+Ergaenzung:
+
+- Benchmark-Reports schreiben jetzt `ctmOverlayDiagnostics`.
+- Die Counter zaehlen, warum verbundene Overlay-Kandidaten ausscheiden:
+  Prefilter-Aufrufe, Prefilter-Pass/Fail, Connect-Aufrufe und konkrete
+  Reject-Gruende.
+- Die Erfassung ist nur bei `-Dargus.benchmark=true` aktiv.
+
+Benchmark-Reports:
+
+- `build/argus-benchmark/reports/ctm-v3-overlay-reject-reasons-20260617/20260617-152041-fabric-overlay-reject-reasons-1.json`
+- `build/argus-benchmark/reports/ctm-v3-overlay-reject-reasons-20260617/20260617-152216-neoforge-overlay-reject-reasons-1.json`
+
+Auszug:
+
+| Loader | Avg FPS | Median FPS | `sodium.process_quad` total | `sodium.ctm` total | `ctm.resolve` total | `connect.call` | `tileMismatch` | `notFullBlock` |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Fabric | 965.538 | 968 | 25022.568 ms | 15634.502 ms | 7850.218 ms | 16311055 | 10122447 | 4155380 |
+| NeoForge | 956.747 | 938 | 24995.433 ms | 15685.752 ms | 8028.398 ms | 16587724 | 10274219 | 4238592 |
+
+Interpretation:
+
+- Die grossen Overlay-Kosten entstehen vor allem durch `connectTiles`-
+  Mismatches und danach durch Nicht-Full-Block-Nachbarn.
+- Fabric und NeoForge sehen dabei praktisch dieselbe Form. Die naechste
+  Optimierung sollte deshalb loader-neutral im shared/client CTM-Pfad liegen.
+- Ein guter naechster Kandidat waere ein hoeherwertiger vorbereiteter
+  Negativpfad fuer homogene Overlay-Gruppen. Reine per-Rule-Mikrooptimierung
+  bleibt nach den bisherigen Messungen riskant.
+
+## Rejected: Directional Overlay Offset Masks 2026-06-17
+
+Status: **revertiert.**
+
+Experiment:
+
+- Der Neighbor-Rule-Index merkte sich, ueber welche der acht Overlay-
+  Nachbarpositionen eine Regel ueberhaupt Kandidat wurde.
+- `maySelectConnectedOverlay(...)` und `selectOverlayTiles(...)` prueften
+  danach nur diese bekannten Offsets statt immer alle Side-/Edge-Offsets.
+- Ziel war weniger `overlayConnect(...)`-Arbeit in grossen Overlay-Stapeln.
+
+Benchmark-Vergleich:
+
+| Loader | Zustand | Avg FPS | Median FPS | `sodium.process_quad` total | `sodium.ctm` total | `ctm.resolve` total | `connect.call` |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Fabric | Overlay Reject Diagnostics | 965.538 | 968 | 25022.568 ms | 15634.502 ms | 7850.218 ms | 16311055 |
+| Fabric | Directional Overlay Masks | 868.929 | 827 | 26513.613 ms | 16814.573 ms | 8321.999 ms | 9111804 |
+| NeoForge | Overlay Reject Diagnostics | 956.747 | 938 | 24995.433 ms | 15685.752 ms | 8028.398 ms | 16587724 |
+| NeoForge | Directional Overlay Masks | 920.844 | 891 | 23335.131 ms | 14576.567 ms | 7441.496 ms | 9179212 |
+
+Interpretation:
+
+- Die Offset-Masken reduzierten zwar `connect.call` deutlich.
+- Fabric wurde aber in FPS und CTM-Buckets schlechter; NeoForge hatte bessere
+  CTM-Buckets, aber ebenfalls niedrigere FPS als die Diagnose-Basis.
+- Weil Fabric und NeoForge gleichwertige Ziele sind und der reale FPS-Wert
+  nicht besser wurde, wurde der Code revertiert. Die Diagnose-Counter bleiben
+  als akzeptierte Messhilfe erhalten.

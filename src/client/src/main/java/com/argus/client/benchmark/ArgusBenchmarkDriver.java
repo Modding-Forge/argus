@@ -9,6 +9,7 @@ import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.WorldDataConfiguration;
 import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
+import com.argus.ctm.CtmOverlayDiagnostics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,6 +156,7 @@ public final class ArgusBenchmarkDriver {
             resetFpsSamples();
             ArgusBenchmark.resetTotals();
             CtmCandidateAnalysis.reset();
+            CtmOverlayDiagnostics.reset();
             captureRuntimeBaselines();
             LOGGER.info("[Argus] benchmark-driver started world={} pos={}",
                     worldLabel(minecraft), positionLabel(minecraft.player));
@@ -790,6 +792,23 @@ public final class ArgusBenchmarkDriver {
         out.append('\n');
         appendJsonArrayEnd(out, 1, true);
 
+        appendJsonArrayStart(out, 1, "ctmOverlayDiagnostics");
+        CtmOverlayDiagnostics.Snapshot[] overlayDiagnostics =
+                CtmOverlayDiagnostics.snapshot();
+        for (int i = 0; i < overlayDiagnostics.length; i++) {
+            CtmOverlayDiagnostics.Snapshot row = overlayDiagnostics[i];
+            if (i > 0) {
+                out.append(",\n");
+            }
+            indent(out, 2).append("{");
+            out.append("\"reason\":\"")
+                    .append(escapeJson(row.reason())).append("\",");
+            out.append("\"count\":").append(row.count());
+            out.append('}');
+        }
+        out.append('\n');
+        appendJsonArrayEnd(out, 1, true);
+
         appendJsonArrayStart(out, 1, "buckets");
         ArgusBenchmark.BucketSnapshot[] buckets = ArgusBenchmark
                 .snapshotTotals();
@@ -956,6 +975,18 @@ public final class ArgusBenchmarkDriver {
                         .append("` | `").append(row.connectModes())
                         .append("` | `").append(row.conditions())
                         .append("` |\n");
+            }
+            out.append('\n');
+        }
+        CtmOverlayDiagnostics.Snapshot[] overlayDiagnostics =
+                CtmOverlayDiagnostics.snapshot();
+        if (overlayDiagnostics.length > 0) {
+            out.append("## CTM Overlay Diagnostics\n\n");
+            out.append("| Reason | Count |\n");
+            out.append("| --- | ---: |\n");
+            for (CtmOverlayDiagnostics.Snapshot row : overlayDiagnostics) {
+                out.append("| `").append(row.reason()).append("` | ")
+                        .append(row.count()).append(" |\n");
             }
             out.append('\n');
         }

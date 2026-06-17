@@ -335,10 +335,14 @@ public final class CtmSelector {
                 && rule.method() != CtmMethod.OVERLAY_CTM) {
             return true;
         }
+        CtmOverlayDiagnostics.record(
+                CtmOverlayDiagnostics.Reason.PREFILTER_CALL);
         int[][] sides = overlaySideOffsets(face);
         for (int i = 0; i < sides.length; i++) {
             int[] d = sides[i];
             if (overlayConnect(rule, view, d[0], d[1], d[2], face)) {
+                CtmOverlayDiagnostics.record(
+                        CtmOverlayDiagnostics.Reason.PREFILTER_PASS);
                 return true;
             }
         }
@@ -346,9 +350,13 @@ public final class CtmSelector {
         for (int i = 0; i < edges.length; i++) {
             int[] d = edges[i];
             if (overlayConnect(rule, view, d[0], d[1], d[2], face)) {
+                CtmOverlayDiagnostics.record(
+                        CtmOverlayDiagnostics.Reason.PREFILTER_PASS);
                 return true;
             }
         }
+        CtmOverlayDiagnostics.record(
+                CtmOverlayDiagnostics.Reason.PREFILTER_FAIL);
         return false;
     }
 
@@ -875,30 +883,49 @@ public final class CtmSelector {
 
     private boolean overlayConnect(CtmRule rule, NeighborView view,
                                    int dx, int dy, int dz, int face) {
+        CtmOverlayDiagnostics.record(
+                CtmOverlayDiagnostics.Reason.CONNECT_CALL);
         if (!view.isFullBlock(dx, dy, dz)) {
+            CtmOverlayDiagnostics.record(
+                    CtmOverlayDiagnostics.Reason.CONNECT_NOT_FULL_BLOCK);
             return false;
         }
         if (!rule.connectTiles().isEmpty()
                 && !matchesAnyConnectTile(rule, view.sprite(dx, dy, dz, face),
                 view.blockId(dx, dy, dz))) {
+            CtmOverlayDiagnostics.record(
+                    CtmOverlayDiagnostics.Reason.CONNECT_TILE_MISMATCH);
             return false;
         }
         if (!rule.connectBlocks().isEmpty()
                 && !matchesAnyConnectBlock(rule, view.blockId(dx, dy, dz))) {
+            CtmOverlayDiagnostics.record(
+                    CtmOverlayDiagnostics.Reason.CONNECT_BLOCK_MISMATCH);
             return false;
         }
         if (rule.connectTiles().isEmpty()
                 && rule.connectBlocks().isEmpty()
                 && !matchesAnyConnectBlockId(view.blockId(dx, dy, dz),
                 centerBlockId(view))) {
+            CtmOverlayDiagnostics.record(
+                    CtmOverlayDiagnostics.Reason.CONNECT_DEFAULT_BLOCK_MISMATCH);
             return false;
         }
         int[] normal = Faces.delta(face);
         if (view.isFullBlock(dx + normal[0], dy + normal[1],
                 dz + normal[2])) {
+            CtmOverlayDiagnostics.record(
+                    CtmOverlayDiagnostics.Reason.CONNECT_FRONT_OCCLUDED);
             return false;
         }
-        return !sameAsBaseUnderRule(rule, view, dx, dy, dz, face);
+        if (sameAsBaseUnderRule(rule, view, dx, dy, dz, face)) {
+            CtmOverlayDiagnostics.record(
+                    CtmOverlayDiagnostics.Reason.CONNECT_SAME_AS_BASE);
+            return false;
+        }
+        CtmOverlayDiagnostics.record(
+                CtmOverlayDiagnostics.Reason.CONNECT_PASS);
+        return true;
     }
 
     private boolean overlayBaseMatches(CtmRule rule, NeighborView view,
