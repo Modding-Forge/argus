@@ -532,6 +532,8 @@ Verworfene Benchmark-Reports:
 - `build/argus-benchmark/reports/ctm-v3-empty-filter-fast-return-20260617/20260617-134943-fabric-empty-filter-fast-return-1.json`
 - `build/argus-benchmark/reports/ctm-v3-empty-filter-fast-return-20260617/20260617-135103-neoforge-empty-filter-fast-return-1.json`
 - `build/argus-benchmark/reports/ctm-v3-empty-filter-fast-return-20260617/20260617-135258-neoforge-empty-filter-fast-return-2.json`
+- `build/argus-benchmark/reports/ctm-v3-direct-block-id-20260617/20260617-140854-fabric-direct-block-id-1.json`
+- `build/argus-benchmark/reports/ctm-v3-direct-block-id-20260617/20260617-141015-neoforge-direct-block-id-1.json`
 
 Vergleich gegen die vorherigen PlatformModelEmitter-Runs:
 
@@ -802,3 +804,31 @@ Interpretation:
 - Da das Ziel loader-parallel ist und `ctm.resolve` auf NeoForge schlechter
   wurde, bleibt der akzeptierte Neighbor-Rule-Index ohne diesen Fast-Return
   die aktuelle Basis.
+
+## Rejected: Direct Block-ID Match Fastpath 2026-06-17
+
+Status: **revertiert.**
+
+Experiment:
+
+- `CtmSelector` verglich bereits namespaced Minecraft-Block-IDs zuerst direkt
+  gegen `matchBlocks`, `connectBlocks` und `connectTiles`-Fallback-IDs.
+- Die alte Normalisierung per `indexOf(':')` sollte nur noch fuer legacy bare
+  IDs laufen.
+- Unit-Tests und beide Loader-Builds waren gruen.
+
+Benchmark-Vergleich:
+
+| Loader | Zustand | Avg FPS | Median FPS | P05 | `sodium.process_quad` total | `sodium.ctm` total | `ctm.resolve` total |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Fabric | Material Sprite Cache | 1126.51 | 1081 | 781 | 22135.3 ms | 13498.1 ms | 6988.5 ms |
+| Fabric | Direct Block-ID Fastpath | 1115.51 | 1087 | 695 | 23295.6 ms | 13840.5 ms | 7593.8 ms |
+| NeoForge | Material Sprite Cache | 1061.53 | 1035 | 742 | 21257.2 ms | 12864.4 ms | 6692.5 ms |
+| NeoForge | Direct Block-ID Fastpath | 1014.26 | 1012 | 650 | 22274.3 ms | 13320.9 ms | 6820.5 ms |
+
+Interpretation:
+
+- Der zusaetzliche zweistufige Vergleich war auf beiden Loadern schlechter.
+- Wahrscheinlich ist der bisherige einfache Normalisierungs- und
+  Einzelschleifenpfad fuer JIT und die realen kurzen Blocklisten guenstiger.
+- Der Code wurde revertiert; Material Sprite Cache bleibt die aktuelle Basis.
