@@ -752,6 +752,13 @@ public final class ArgusBenchmarkDriver {
                     .append(',');
             out.append("\"blockRules\":").append(row.blockRules())
                     .append(',');
+            out.append("\"averageEffectiveBlockRules\":")
+                    .append(formatDouble(row.averageEffectiveBlockRules()))
+                    .append(',');
+            out.append("\"maxEffectiveBlockRules\":")
+                    .append(row.maxEffectiveBlockRules()).append(',');
+            out.append("\"zeroEffectiveBlockRuleCalls\":")
+                    .append(row.zeroEffectiveBlockRuleCalls()).append(',');
             out.append("\"totalRules\":").append(row.totalRules())
                     .append(',');
             out.append("\"overlayRules\":").append(row.overlayRules())
@@ -916,14 +923,20 @@ public final class ArgusBenchmarkDriver {
                 CtmCandidateAnalysis.topSnapshots();
         if (candidateSets.length > 0) {
             out.append("## CTM Candidate Sets\n\n");
-            out.append("| Calls | Block | Sprite | Face | Rules | Overlay | Methods | Connectivity | Connect | Conditions |\n");
-            out.append("| ---: | --- | --- | --- | ---: | ---: | --- | --- | --- | --- |\n");
+            out.append("| Calls | Block | Sprite | Face | Rules | Effective block rules | Overlay | Methods | Connectivity | Connect | Conditions |\n");
+            out.append("| ---: | --- | --- | --- | ---: | ---: | ---: | --- | --- | --- | --- |\n");
             for (CtmCandidateAnalysis.Snapshot row : candidateSets) {
                 out.append("| ").append(row.calls())
                         .append(" | `").append(row.blockId())
                         .append("` | `").append(row.sprite())
                         .append("` | `").append(row.face())
                         .append("` | ").append(row.totalRules())
+                        .append(" | ")
+                        .append(formatDouble(row.averageEffectiveBlockRules()))
+                        .append(" avg / ")
+                        .append(row.maxEffectiveBlockRules()).append(" max / ")
+                        .append(row.zeroEffectiveBlockRuleCalls())
+                        .append(" zero")
                         .append(" | ")
                         .append(formatDouble(row.overlayShare() * 100.0D))
                         .append("% | `").append(row.methods())

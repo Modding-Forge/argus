@@ -679,6 +679,54 @@ Interpretation:
   Er muss Kandidaten schon vor dem Hotpath in kleinere, homogene Gruppen
   sortieren oder vorberechnen.
 
+## Effective Candidate Analysis 2026-06-17
+
+Status: **implementiert und auf beiden Loadern verifiziert.**
+
+Ergaenzung:
+
+- `ctmCandidateSets` enthaelt jetzt neben den rohen `blockRules` auch:
+  - `averageEffectiveBlockRules`
+  - `maxEffectiveBlockRules`
+  - `zeroEffectiveBlockRuleCalls`
+- Die Werte werden erst nach dem `CtmNeighborRuleIndex`-Filter erfasst. Damit
+  zeigt der Report, wie viele Blockregeln im Resolver wirklich noch
+  ausgewertet werden.
+
+Validierter Command:
+
+```powershell
+.\gradlew.bat :src:shared:test :src:fabric:build :src:neoforge:build
+```
+
+Benchmark-Reports:
+
+- `build/argus-benchmark/reports/ctm-v3-effective-candidate-analysis-20260617/20260617-141718-fabric-effective-candidate-analysis-1.json`
+- `build/argus-benchmark/reports/ctm-v3-effective-candidate-analysis-20260617/20260617-141840-neoforge-effective-candidate-analysis-1.json`
+
+Auszug:
+
+| Loader | Block/Sprite/Face | Raw Block Rules | Avg Effective | Max Effective |
+| --- | --- | ---: | ---: | ---: |
+| Fabric | deepslate / deepslate_top / up | 179 | 0.082 | 3 |
+| Fabric | grass_block / grass_block_top / up | 55 | 0.009 | 2 |
+| Fabric | stone / stone / up | 190 | 0.245 | 4 |
+| NeoForge | deepslate / deepslate_top / up | 179 | 0.082 | 3 |
+| NeoForge | grass_block / grass_block_top / up | 55 | 0.009 | 2 |
+| NeoForge | stone / stone / up | 190 | 0.245 | 4 |
+
+Interpretation:
+
+- Der Neighbor-Rule-Index reduziert die grossen Overlay-Kandidatenarrays
+  bereits auf fast nichts. Die naechste groessere Verbesserung liegt deshalb
+  nicht mehr in noch mehr Regel-Loop-Mikrooptimierung.
+- `ctm.resolve` ist jetzt vor allem sehr haeufiger Resolver-Aufruf mit wenig
+  Restarbeit. Ein bereits getesteter Empty-Filter-Fast-Return half Fabric, war
+  aber auf NeoForge schlechter und bleibt deshalb verworfen.
+- Der naechste sinnvolle Hebel muss die Anzahl der Resolve-Aufrufe oder die
+  Block-/Face-/Sprite-Cache-Trefferquote verbessern, ohne einen neuen Branch
+  pro Regel einzufuehren.
+
 ## Accepted: Neighbor Rule Index 2026-06-17
 
 Status: **unit-, build- und benchmark-verifiziert.**

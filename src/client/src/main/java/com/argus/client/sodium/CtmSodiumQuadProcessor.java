@@ -167,8 +167,6 @@ public final class CtmSodiumQuadProcessor {
                     prefilterStart);
             return ArgusCtmFaceSpriteResult.NO_WORK;
         }
-        CtmCandidateAnalysis.record(blockId, baseSprite, face,
-                candidateScratch);
         ArgusBenchmark.record(ArgusBenchmark.CTM_PREFILTER, prefilterStart);
         long neighborStart = ArgusBenchmark.start();
         CtmMinecraftNeighborView neighborView = blockPlan.neighborView();
@@ -190,6 +188,8 @@ public final class CtmSodiumQuadProcessor {
                 candidateScratch,
                 renderScratch);
         ArgusBenchmark.record(ArgusBenchmark.CTM_RESOLVE, resolveStart);
+        CtmCandidateAnalysis.record(blockId, baseSprite, face,
+                candidateScratch);
         if (!resolved || !renderScratch.hasWork()) {
             return ArgusCtmFaceSpriteResult.NO_WORK;
         }

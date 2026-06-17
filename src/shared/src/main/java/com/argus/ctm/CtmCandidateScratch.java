@@ -69,6 +69,19 @@ public final class CtmCandidateScratch {
         return blockRuleCount;
     }
 
+    /**
+     * Returns the number of block rules that remain after any candidate
+     * prefilter has run.
+     *
+     * <p>Threading: caller-owned scratch, not thread-safe.
+     *
+     * <p>Performance: HOT PATH. This is a plain field read for renderer
+     * diagnostics and benchmark instrumentation.
+     */
+    public int effectiveBlockRuleCount() {
+        return blockRuleCount;
+    }
+
     public int workFlags() {
         return workFlags;
     }

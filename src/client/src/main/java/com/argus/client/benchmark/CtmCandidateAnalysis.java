@@ -14,6 +14,7 @@ import java.util.EnumMap;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -66,8 +67,7 @@ public final class CtmCandidateAnalysis {
                 faceName(face),
                 candidates.spriteRules(),
                 candidates.blockRules()))
-                .calls
-                .increment();
+                .record(candidates.effectiveBlockRuleCount());
     }
 
     /**
@@ -274,6 +274,10 @@ public final class CtmCandidateAnalysis {
         private final String conditions;
         private final String firstSource;
         private final LongAdder calls = new LongAdder();
+        private final LongAdder effectiveBlockRuleTotal = new LongAdder();
+        private final LongAdder zeroEffectiveBlockRuleCalls = new LongAdder();
+        private final AtomicInteger maxEffectiveBlockRules =
+                new AtomicInteger();
 
         private Entry(String blockId,
                       String sprite,
@@ -295,16 +299,33 @@ public final class CtmCandidateAnalysis {
             this.firstSource = firstSource(spriteRules, blockRules);
         }
 
+        private void record(int effectiveBlockRules) {
+            calls.increment();
+            effectiveBlockRuleTotal.add(effectiveBlockRules);
+            if (effectiveBlockRules == 0) {
+                zeroEffectiveBlockRuleCalls.increment();
+            }
+            maxEffectiveBlockRules.accumulateAndGet(effectiveBlockRules,
+                    Math::max);
+        }
+
         private Snapshot snapshot() {
             int totalRules = spriteRules + blockRules;
+            long callCount = calls.sum();
+            long effectiveTotal = effectiveBlockRuleTotal.sum();
             return new Snapshot(
                     key,
-                    calls.sum(),
+                    callCount,
                     blockId,
                     sprite,
                     face,
                     spriteRules,
                     blockRules,
+                    callCount == 0L
+                            ? 0.0D
+                            : (double) effectiveTotal / callCount,
+                    maxEffectiveBlockRules.get(),
+                    zeroEffectiveBlockRuleCalls.sum(),
                     totalRules,
                     overlayRules,
                     totalRules == 0
@@ -359,6 +380,9 @@ public final class CtmCandidateAnalysis {
             String face,
             int spriteRules,
             int blockRules,
+            double averageEffectiveBlockRules,
+            int maxEffectiveBlockRules,
+            long zeroEffectiveBlockRuleCalls,
             int totalRules,
             int overlayRules,
             double overlayShare,
