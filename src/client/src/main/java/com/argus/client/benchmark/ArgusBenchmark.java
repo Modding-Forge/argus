@@ -32,6 +32,8 @@ public final class ArgusBenchmark {
     public static final int CTM_UV_REMAP = 12;
     public static final int CTM_FACE_CACHE_HIT = 13;
     public static final int CTM_FACE_CACHE_MISS = 14;
+    public static final int CTM_RESOLVE_CACHE_HIT = 15;
+    public static final int CTM_RESOLVE_CACHE_MISS = 16;
 
     private static final boolean ENABLED =
             Boolean.getBoolean("argus.benchmark");
@@ -52,7 +54,9 @@ public final class ArgusBenchmark {
             "ctm.overlay_plan",
             "ctm.uv_remap",
             "ctm.face_cache_hit",
-            "ctm.face_cache_miss"
+            "ctm.face_cache_miss",
+            "ctm.resolve_cache_hit",
+            "ctm.resolve_cache_miss"
     };
     private static final LongAdder[] COUNTS = counters();
     private static final LongAdder[] NANOS = counters();
