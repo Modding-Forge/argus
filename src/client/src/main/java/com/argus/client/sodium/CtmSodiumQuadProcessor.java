@@ -69,6 +69,8 @@ public final class CtmSodiumQuadProcessor {
 
     private final CtmSodiumSpriteLookup spriteLookup =
             new CtmSodiumSpriteLookup();
+    private final CtmSodiumMaterialSpriteCache materialSpriteCache =
+            new CtmSodiumMaterialSpriteCache(spriteLookup);
     private final CtmSodiumOverlayTint overlayTint =
             new CtmSodiumOverlayTint();
     private final CtmSodiumLayerPolicy layerPolicy =
@@ -260,8 +262,8 @@ public final class CtmSodiumQuadProcessor {
             CtmMaterialEntry material = materialTable.findOrNull(
                     selection.rule(), selection.primaryTileIndex());
             if (material != null && !isGlassLikeBlock(blockId)) {
-                TextureAtlasSprite target = spriteLookup.sprite(
-                        material.sprite());
+                TextureAtlasSprite target = materialSpriteCache.sprite(
+                        materialTable, material);
                 if (target != null && !sameSprite(sourceSprite, target)) {
                     ArgusBenchmark.record(ArgusBenchmark.CTM_MATERIAL,
                             materialStart);
@@ -324,7 +326,8 @@ public final class CtmSodiumQuadProcessor {
             ArgusBenchmark.record(ArgusBenchmark.CTM_MATERIAL, materialStart);
             return false;
         }
-        TextureAtlasSprite target = spriteLookup.sprite(material.sprite());
+        TextureAtlasSprite target = materialSpriteCache.sprite(
+                materialTable, material);
         if (target == null || sameSprite(sourceSprite, target)) {
             ArgusBenchmark.record(ArgusBenchmark.CTM_MATERIAL, materialStart);
             debugSeenQuad(blockId, pos, direction, sourceSprite, selection,
@@ -372,8 +375,8 @@ public final class CtmSodiumQuadProcessor {
                 plan.clear();
                 return;
             }
-            TextureAtlasSprite sprite = spriteLookup.sprite(
-                    material.sprite());
+            TextureAtlasSprite sprite = materialSpriteCache.sprite(
+                    materialTable, material);
             if (sprite == null) {
                 plan.clear();
                 return;
@@ -391,8 +394,8 @@ public final class CtmSodiumQuadProcessor {
         if (material == null) {
             return;
         }
-        TextureAtlasSprite sprite = spriteLookup.sprite(
-                material.sprite());
+        TextureAtlasSprite sprite = materialSpriteCache.sprite(
+                materialTable, material);
         if (sprite == null) {
             return;
         }
@@ -702,8 +705,8 @@ public final class CtmSodiumQuadProcessor {
             if (material == null) {
                 continue;
             }
-            TextureAtlasSprite sprite = spriteLookup.sprite(
-                    material.sprite());
+            TextureAtlasSprite sprite = materialSpriteCache.sprite(
+                    materialTable, material);
             if (sprite == null) {
                 continue;
             }

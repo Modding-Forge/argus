@@ -706,6 +706,8 @@ Benchmark-Reports:
 
 - `build/argus-benchmark/reports/ctm-v3-neighbor-rule-index-20260617/20260617-134004-fabric-neighbor-rule-index-1.json`
 - `build/argus-benchmark/reports/ctm-v3-neighbor-rule-index-20260617/20260617-134126-neoforge-neighbor-rule-index-1.json`
+- `build/argus-benchmark/reports/ctm-v3-material-sprite-cache-20260617/20260617-140104-fabric-material-sprite-cache-1.json`
+- `build/argus-benchmark/reports/ctm-v3-material-sprite-cache-20260617/20260617-140224-neoforge-material-sprite-cache-1.json`
 
 Vergleich gegen die neue TP125-Basis:
 
@@ -713,8 +715,10 @@ Vergleich gegen die neue TP125-Basis:
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Fabric | TP125-Basis, beste 3er-Spanne | 946.86-978.31 | 888-958 | 719-741 | 639-735 | 110629.6-115001.2 ms | 19175.6-20196.2 ns |
 | Fabric | Neighbor Rule Index | 1083.52 | 1060 | 731 | 668 | 8639.1 ms | 1434.0 ns |
+| Fabric | Material Sprite Cache | 1126.51 | 1081 | 781 | 727 | 6988.5 ms | 1188.4 ns |
 | NeoForge | TP125-Basis, 3er-Spanne | 794.24-908.56 | 838-914 | 32-684 | 30 | 107411.7-131369.3 ms | 18706.8-23099.5 ns |
 | NeoForge | Neighbor Rule Index | 1058.80 | 1054 | 760 | 33 | 6929.8 ms | 1152.9 ns |
+| NeoForge | Material Sprite Cache | 1061.53 | 1035 | 742 | 32 | 6692.5 ms | 1114.4 ns |
 
 Interpretation:
 
@@ -724,6 +728,44 @@ Interpretation:
 - NeoForge hatte am Run-Ende weiterhin einen allgemeinen Low-FPS-/GC-Stall
   mit 20 Low-FPS-Samples; der CTM-Bucket blieb dabei trotzdem stark reduziert.
   Das ist eher Runtime-/Heap-Stabilitaet als ein `ctm.resolve`-Regression.
+
+## Accepted: Material Sprite Cache 2026-06-17
+
+Status: **build- und benchmark-verifiziert.**
+
+Implementiert:
+
+- `CtmSodiumMaterialSpriteCache` cached pro `CtmSodiumQuadProcessor` die
+  Aufloesung von `CtmMaterialEntry` zu `TextureAtlasSprite`.
+- Der Cache wird geleert, wenn die immutable `CtmMaterialTable`-Snapshot-
+  Referenz wechselt.
+- Die Aenderung sitzt in `src/client` und gilt dadurch fuer Fabric und
+  NeoForge identisch.
+
+Validierter Command:
+
+```powershell
+.\gradlew.bat :src:shared:test :src:fabric:build :src:neoforge:build
+```
+
+Benchmark-Vergleich:
+
+| Loader | Zustand | Avg FPS | Median FPS | `sodium.process_quad` total | `sodium.ctm` total | `ctm.resolve` total |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Fabric | Neighbor Rule Index | 1083.52 | 1060 | 27200.3 ms | 16775.6 ms | 8639.1 ms |
+| Fabric | Material Sprite Cache | 1126.51 | 1081 | 22135.3 ms | 13498.1 ms | 6988.5 ms |
+| NeoForge | Neighbor Rule Index | 1058.80 | 1054 | 22134.8 ms | 13381.8 ms | 6929.8 ms |
+| NeoForge | Material Sprite Cache | 1061.53 | 1035 | 21257.2 ms | 12864.4 ms | 6692.5 ms |
+
+Interpretation:
+
+- Der Cache ist kein neuer CTM-Selector-Hebel, senkt aber die
+  Material-/Sprite-Realisierungskosten im Sodium-Pfad.
+- Fabric profitiert deutlich in `sodium.process_quad`, `sodium.ctm` und
+  `ctm.resolve`.
+- NeoForge profitiert kleiner, aber in denselben Buckets. Der bekannte
+  NeoForge-Endstall blieb ein allgemeines Runtime-/GC-Thema, nicht ein
+  CTM-Regression.
 
 Erstversuch-Problem:
 
