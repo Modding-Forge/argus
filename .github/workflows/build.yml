@@ -43,14 +43,14 @@ jobs:
       - name: Build NeoForge jar
         run: ./gradlew :src:neoforge:build
 
-      - name: Collect release artifacts
+      - name: Collect loader artifacts
         run: |
           mkdir -p build/release-artifacts
           cp src/fabric/build/libs/argus-fabric-*.jar build/release-artifacts/
           cp src/neoforge/build/libs/argus-neoforge-*.jar build/release-artifacts/
           ls -la build/release-artifacts
 
-      - name: Upload build artifacts
+      - name: Upload loader artifacts
         uses: actions/upload-artifact@v4
         with:
           name: argus-loader-jars-${{ github.sha }}
@@ -62,6 +62,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Argus ${{ github.ref_name }}
-          files: build/release-artifacts/*.jar
+          files: |
+            build/release-artifacts/argus-fabric-*.jar
+            build/release-artifacts/argus-neoforge-*.jar
           fail_on_unmatched_files: true
           generate_release_notes: true
