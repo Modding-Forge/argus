@@ -1078,3 +1078,30 @@ Interpretation:
 - Vermutlich ist die bestehende `List<Integer>` aus dem statischen Cache fuer
   JIT und Branch-Prediction guenstiger als die zusaetzliche Bit-Decodierung.
 - Der Code wurde revertiert; Material Sprite Cache bleibt die aktuelle Basis.
+
+## Rejected: Overlay Neighbor Local Cache 2026-06-17
+
+Status: **revertiert.**
+
+Experiment:
+
+- `overlayConnect(...)` cached Neighbor-Block-ID, Neighbor-Sprite und
+  Full-Block-State innerhalb eines Overlay-Nachbarchecks, damit Connect-Checks
+  und Same-As-Base-Ausschluss dieselben Werte wiederverwenden koennen.
+- Unit-Tests und beide Loader-Builds waren gruen.
+
+Benchmark-Vergleich:
+
+| Loader | Zustand | Avg FPS | Median FPS | P05 | `sodium.process_quad` total | `sodium.ctm` total | `ctm.resolve` total |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Fabric | Material Sprite Cache | 1126.51 | 1081 | 781 | 22135.3 ms | 13498.1 ms | 6988.5 ms |
+| Fabric | Overlay Neighbor Local Cache | 905.65 | 878 | 602 | 23105.9 ms | 14435.3 ms | 7341.2 ms |
+| NeoForge | Material Sprite Cache | 1061.53 | 1035 | 742 | 21257.2 ms | 12864.4 ms | 6692.5 ms |
+| NeoForge | Overlay Neighbor Local Cache | 863.91 | 858 | 559 | 24527.6 ms | 15350.8 ms | 7902.1 ms |
+
+Interpretation:
+
+- Die lokalen Cache-Branches waren auf beiden Loadern klar schlechter.
+- Die gesparten NeighborView-Zugriffe wiegen die zusaetzliche lokale
+  Kontrolllogik nicht auf. Der Code wurde revertiert; Material Sprite Cache
+  bleibt die aktuelle Basis.
