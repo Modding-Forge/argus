@@ -144,9 +144,15 @@ public final class CtmSodiumQuadProcessor {
             ArgusBenchmark.count(ArgusBenchmark.CTM_FACE_CACHE_MISS);
             resolved = resolveFaceSprite(ctmBlockPlan, blockId, baseSprite,
                     sourceSprite, face, pos);
+            ArgusBenchmark.count(resolved.hasWork()
+                    ? ArgusBenchmark.CTM_FACE_CACHE_MISS_WORK
+                    : ArgusBenchmark.CTM_FACE_CACHE_MISS_NO_WORK);
             ctmBlockPlan.cache(face, sourceSprite, resolved);
         } else {
             ArgusBenchmark.count(ArgusBenchmark.CTM_FACE_CACHE_HIT);
+            ArgusBenchmark.count(resolved.hasWork()
+                    ? ArgusBenchmark.CTM_FACE_CACHE_HIT_WORK
+                    : ArgusBenchmark.CTM_FACE_CACHE_HIT_NO_WORK);
         }
         return applyResolvedResult(resolved, quad, overlaySource, plan,
                 materialTable, state, level, pos, blockId, direction,
