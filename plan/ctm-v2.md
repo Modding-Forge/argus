@@ -1019,3 +1019,33 @@ Interpretation:
 - Wahrscheinlich ist der bisherige einfache Normalisierungs- und
   Einzelschleifenpfad fuer JIT und die realen kurzen Blocklisten guenstiger.
 - Der Code wurde revertiert; Material Sprite Cache bleibt die aktuelle Basis.
+
+## Rejected: Lazy Center Cache 2026-06-17
+
+Status: **revertiert.**
+
+Experiment:
+
+- `CtmSelector.beginResolve(...)` sollte Center-Block-ID, Center-Sprite und
+  Center-FullBlock nicht mehr eager laden, sondern erst beim ersten
+  tatsaechlichen Zugriff.
+- Motivation: viele Resolve-Pfade enden nach Prefilter/Neighbor-Index ohne
+  echte Center-Vergleiche.
+- Unit-Tests und beide Loader-Builds waren gruen.
+
+Benchmark-Vergleich gegen die Work-Split-Basis:
+
+| Loader | Zustand | Avg FPS | Median FPS | P05 | `sodium.process_quad` total | `sodium.ctm` total | `ctm.resolve` total |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Fabric | Work-Split-Basis | 875.360 | 866 | 578 | 26346.8 ms | 16186.3 ms | 7925.7 ms |
+| Fabric | Lazy Center Cache | 934.2 | 889 | 652 | 22763.4 ms | 13986.2 ms | 6939.1 ms |
+| NeoForge | Work-Split-Basis | 862.221 | 871 | 570 | 23276.3 ms | 13976.8 ms | 6764.1 ms |
+| NeoForge | Lazy Center Cache | 889.4 | 881 | 655 | 23878.9 ms | 14563.5 ms | 7382.8 ms |
+
+Interpretation:
+
+- Fabric wurde deutlich besser und beide Loader hatten bessere FPS-Werte.
+- NeoForge wurde aber in `sodium.ctm` und `ctm.resolve` schlechter.
+- Weil Fabric und NeoForge gleichwertige Release-Ziele sind und der CTM-v2-
+  Fokus ausdruecklich niedrigeres `ctm.resolve` ist, wurde der Code
+  revertiert. Work-Split/Material-Sprite-Cache bleiben die aktuelle Basis.
