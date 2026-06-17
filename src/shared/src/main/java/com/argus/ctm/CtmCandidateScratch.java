@@ -23,6 +23,7 @@ public final class CtmCandidateScratch {
     private CtmRule[] spriteRules = CtmRenderIndex.noRules();
     private CtmRule[] blockRules = CtmRenderIndex.noRules();
     private CtmNeighborRuleIndex blockNeighborIndex;
+    // Retained across calls so indexed block-rule filtering does not allocate per quad.
     private CtmRule[] filteredBlockRules = CtmRenderIndex.noRules();
     private long[] neighborRuleMask = new long[0];
     private int blockRuleCount;
@@ -32,7 +33,6 @@ public final class CtmCandidateScratch {
         spriteRules = CtmRenderIndex.noRules();
         blockRules = CtmRenderIndex.noRules();
         blockNeighborIndex = null;
-        filteredBlockRules = CtmRenderIndex.noRules();
         blockRuleCount = 0;
         workFlags = NO_WORK;
     }
@@ -44,7 +44,6 @@ public final class CtmCandidateScratch {
         this.spriteRules = spriteRules;
         this.blockRules = blockRules;
         this.blockNeighborIndex = blockNeighborIndex;
-        this.filteredBlockRules = CtmRenderIndex.noRules();
         this.blockRuleCount = blockRules.length;
         this.workFlags = workFlags;
     }
