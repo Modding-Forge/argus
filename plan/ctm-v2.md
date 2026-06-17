@@ -529,6 +529,9 @@ Verworfene Benchmark-Reports:
 - `build/argus-benchmark/reports/ctm-v3-overlay-resolve-cache-reuse-20260617/20260617-132256-neoforge-overlay-resolve-cache-reuse-1.json`
 - `build/argus-benchmark/reports/ctm-v3-overlay-resolve-cache-toponly-20260617/20260617-132525-fabric-overlay-resolve-cache-toponly-1.json`
 - `build/argus-benchmark/reports/ctm-v3-overlay-resolve-cache-toponly-20260617/20260617-132649-neoforge-overlay-resolve-cache-toponly-1.json`
+- `build/argus-benchmark/reports/ctm-v3-empty-filter-fast-return-20260617/20260617-134943-fabric-empty-filter-fast-return-1.json`
+- `build/argus-benchmark/reports/ctm-v3-empty-filter-fast-return-20260617/20260617-135103-neoforge-empty-filter-fast-return-1.json`
+- `build/argus-benchmark/reports/ctm-v3-empty-filter-fast-return-20260617/20260617-135258-neoforge-empty-filter-fast-return-2.json`
 
 Vergleich gegen die vorherigen PlatformModelEmitter-Runs:
 
@@ -606,6 +609,11 @@ Interpretation:
   "geringeres `ctm.resolve`" nicht: Fabric stieg auf 122820.0 ms
   `ctm.resolve`, NeoForge auf 115215.1 ms. Der Cache-Key selbst ist zu teuer
   fuer die erzielte Trefferklasse und wurde per Revert entfernt.
+- Ein Fast-Return nach dem `CtmNeighborRuleIndex`-Filter wird nicht
+  beibehalten. Die Idee war, Kandidatensaetze abzubrechen, wenn der
+  Neighbor-Index alle Block-Regeln entfernt hat. Fabric wurde besser, aber
+  NeoForge wurde in zwei Runs bei `ctm.resolve` und `sodium.ctm` schlechter.
+  Da Fabric und NeoForge gleichwertige Ziele sind, wurde der Code revertiert.
 
 Naechste sinnvolle Schritte:
 
@@ -723,3 +731,32 @@ Erstversuch-Problem:
   wenn ein grosser vorheriger Index und ein kleiner aktueller Index denselben
   Maskenpuffer nutzten. Fix: Masken-Merge laeuft ueber die Source-Laenge, nicht
   ueber die wiederverwendete Target-Laenge.
+
+## Rejected: Empty Filter Fast Return 2026-06-17
+
+Status: **revertiert.**
+
+Experiment:
+
+- `CtmRenderResolver.resolveCandidatesInto(...)` brach direkt ab, wenn der
+  Neighbor-Index nach dem Nachbarfilter keine Block-Regeln mehr uebrig liess
+  und keine Sprite-Regeln vorhanden waren.
+- Unit-Test und Build waren gruen.
+
+Benchmark-Vergleich:
+
+| Loader | Zustand | Avg FPS | Median FPS | P05 | P01 | `sodium.ctm` total | `ctm.resolve` total | `ctm.resolve` avg |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Fabric | Neighbor Rule Index | 1083.52 | 1060 | 731 | 668 | 16775.6 ms | 8639.1 ms | 1434.0 ns |
+| Fabric | Empty Filter Fast Return | 1141.90 | 1115 | 829 | 707 | 13616.6 ms | 7270.4 ms | 1182.6 ns |
+| NeoForge | Neighbor Rule Index | 1058.80 | 1054 | 760 | 33 | 13381.8 ms | 6929.8 ms | 1152.9 ns |
+| NeoForge | Empty Filter Fast Return 1 | 1043.17 | 1054 | 728 | 32 | 13646.9 ms | 7229.6 ms | 1201.7 ns |
+| NeoForge | Empty Filter Fast Return 2 | 1054.06 | 1053 | 727 | 32 | 13741.6 ms | 7415.2 ms | 1205.6 ns |
+
+Interpretation:
+
+- Fabric profitierte klar, aber NeoForge verlor reproduzierbar in den
+  CTM-Buckets.
+- Da das Ziel loader-parallel ist und `ctm.resolve` auf NeoForge schlechter
+  wurde, bleibt der akzeptierte Neighbor-Rule-Index ohne diesen Fast-Return
+  die aktuelle Basis.
