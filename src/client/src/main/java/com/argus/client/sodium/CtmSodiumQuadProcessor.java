@@ -78,8 +78,6 @@ public final class CtmSodiumQuadProcessor {
     private final CtmRenderScratch renderScratch = new CtmRenderScratch();
     private final CtmCandidateScratch candidateScratch =
             new CtmCandidateScratch();
-    private final CtmOverlayResolveCache overlayResolveCache =
-            new CtmOverlayResolveCache();
 
     private static final ConcurrentMap<Identifier, NamespaceId> SPRITE_IDS =
             new ConcurrentHashMap<>();
@@ -180,16 +178,6 @@ public final class CtmSodiumQuadProcessor {
         neighborView.setSpriteForFace(0, 0, 0, face, sourceSprite);
         ArgusBenchmark.record(ArgusBenchmark.CTM_NEIGHBOR_VIEW,
                 neighborStart);
-        boolean cacheable = overlayResolveCache.prepare(candidateScratch,
-                blockId, baseSprite, neighborView, face);
-        if (cacheable) {
-            ArgusCtmFaceSpriteResult cached = overlayResolveCache.lookup();
-            if (cached != null) {
-                ArgusBenchmark.count(ArgusBenchmark.CTM_RESOLVE_CACHE_HIT);
-                return cached;
-            }
-            ArgusBenchmark.count(ArgusBenchmark.CTM_RESOLVE_CACHE_MISS);
-        }
         long resolveStart = ArgusBenchmark.start();
         boolean resolved = resolver.resolveCandidatesInto(
                 blockId,
@@ -201,17 +189,9 @@ public final class CtmSodiumQuadProcessor {
                 renderScratch);
         ArgusBenchmark.record(ArgusBenchmark.CTM_RESOLVE, resolveStart);
         if (!resolved || !renderScratch.hasWork()) {
-            if (cacheable) {
-                overlayResolveCache.store(ArgusCtmFaceSpriteResult.NO_WORK);
-            }
             return ArgusCtmFaceSpriteResult.NO_WORK;
         }
-        ArgusCtmFaceSpriteResult result =
-                ArgusCtmFaceSpriteResult.copyOf(renderScratch);
-        if (cacheable) {
-            overlayResolveCache.store(result);
-        }
-        return result;
+        return ArgusCtmFaceSpriteResult.copyOf(renderScratch);
     }
 
     private boolean applyResolvedResult(
