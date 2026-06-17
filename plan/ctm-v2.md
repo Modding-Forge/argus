@@ -1049,3 +1049,32 @@ Interpretation:
 - Weil Fabric und NeoForge gleichwertige Release-Ziele sind und der CTM-v2-
   Fokus ausdruecklich niedrigeres `ctm.resolve` ist, wurde der Code
   revertiert. Work-Split/Material-Sprite-Cache bleiben die aktuelle Basis.
+
+## Rejected: Packed Overlay Tile Cache 2026-06-17
+
+Status: **revertiert.**
+
+Experiment:
+
+- `selectOverlayInto(...)` sollte die vorgecachten Overlay-Tile-Listen nicht
+  mehr als `List<Integer>` lesen, sondern aus einem gepackten `int` direkt in
+  `CtmRenderScratch` schreiben.
+- Die oeffentliche Listen-API blieb unveraendert; nur der Sodium-Scratch-
+  Hotpath nutzte den zweiten Cache.
+- Unit-Tests und beide Loader-Builds waren gruen.
+
+Benchmark-Vergleich:
+
+| Loader | Zustand | Avg FPS | Median FPS | P05 | `sodium.process_quad` total | `sodium.ctm` total | `ctm.resolve` total |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Fabric | Material Sprite Cache | 1126.51 | 1081 | 781 | 22135.3 ms | 13498.1 ms | 6988.5 ms |
+| Fabric | Packed Overlay Tile Cache | 910.9 | 875 | 637 | 23921.5 ms | 14748.6 ms | 7212.2 ms |
+| NeoForge | Material Sprite Cache | 1061.53 | 1035 | 742 | 21257.2 ms | 12864.4 ms | 6692.5 ms |
+| NeoForge | Packed Overlay Tile Cache | 849.9 | 855 | 552 | 24395.8 ms | 14688.2 ms | 7370.2 ms |
+
+Interpretation:
+
+- Der gepackte Tile-Cache war auf beiden Loadern schlechter.
+- Vermutlich ist die bestehende `List<Integer>` aus dem statischen Cache fuer
+  JIT und Branch-Prediction guenstiger als die zusaetzliche Bit-Decodierung.
+- Der Code wurde revertiert; Material Sprite Cache bleibt die aktuelle Basis.
