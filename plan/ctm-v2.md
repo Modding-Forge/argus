@@ -762,6 +762,75 @@ Interpretation:
   Schritt ist nicht Cache-Entfernung, sondern gezieltere Cache-Treffer oder
   weniger Cache-Misses.
 
+## Face Cache Work Split 2026-06-17
+
+Status: **Diagnose implementiert und auf beiden Loadern verifiziert.**
+
+Ergaenzung:
+
+- `ArgusBenchmark` zaehlt jetzt:
+  - `ctm.face_cache_hit_work`
+  - `ctm.face_cache_hit_no_work`
+  - `ctm.face_cache_miss_work`
+  - `ctm.face_cache_miss_no_work`
+- Ziel war zu pruefen, ob der blocklokale Face/Sprite-Cache echte
+  CTM-Arbeit wiederverwendet oder vor allem negative Ergebnisse cached.
+
+Benchmark-Reports:
+
+- `build/argus-benchmark/reports/ctm-v3-face-cache-work-split-20260617/20260617-143104-fabric-face-cache-work-split-1.json`
+- `build/argus-benchmark/reports/ctm-v3-face-cache-work-split-20260617/20260617-143241-neoforge-face-cache-work-split-1.json`
+
+Auswertung:
+
+| Loader | Hits | Hit Work | Hit No Work | Miss Work | Miss No Work |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Fabric | 174503 | 67 | 174436 | 418141 | 6714767 |
+| NeoForge | 173024 | 71 | 172953 | 409667 | 6691452 |
+
+Interpretation:
+
+- Praktisch alle Face/Sprite-Cache-Hits sind `NO_WORK`.
+- Echte Work-Hits liegen bei nur etwa 0.04 Prozent der Cache-Hits.
+- Der Cache bleibt trotzdem sinnvoll, weil er viele negative Resolves
+  vermeidet. Der naechste Hebel ist nicht groesseres Work-Caching, sondern
+  weniger Misses oder billigere negative Resolve-Pfade.
+
+## Rejected: Scratch Result View / Work-Result nicht cachen 2026-06-17
+
+Status: **revertiert.**
+
+Experiment:
+
+- Work-Results wurden nicht mehr im blocklokalen Face/Sprite-Cache abgelegt.
+- Statt `ArgusCtmFaceSpriteResult.copyOf(...)` sollte ein kurzlebiger
+  Scratch-View das aktuelle `CtmRenderScratch` direkt bis zum Apply-Pfad
+  sichtbar machen.
+- Motivation: Work-Hits sind praktisch null, Work-Misses aber haeufig. Das
+  Kopieren der Overlay-Regel-/Tile-Arrays sah daher wie vermeidbare Arbeit aus.
+
+Benchmark-Reports:
+
+- `build/argus-benchmark/reports/ctm-v3-scratch-result-view-20260617/20260617-143516-fabric-scratch-result-view-1.json`
+- `build/argus-benchmark/reports/ctm-v3-scratch-result-view-20260617/20260617-143643-neoforge-scratch-result-view-1.json`
+
+Vergleich:
+
+| Loader | Zustand | Avg FPS | Median FPS | `sodium.process_quad` total | `sodium.ctm` total | `ctm.resolve` total |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Fabric | Work-Split-Basis | 875.360 | 866 | 26346.8 ms | 16186.3 ms | 7925.7 ms |
+| Fabric | Scratch Result View | 851.804 | 820 | 26463.1 ms | 16493.3 ms | 7997.8 ms |
+| NeoForge | Work-Split-Basis | 862.221 | 871 | 23276.3 ms | 13976.8 ms | 6764.1 ms |
+| NeoForge | Scratch Result View | 806.078 | 818 | 28562.3 ms | 17666.0 ms | 9165.0 ms |
+
+Interpretation:
+
+- Die Scratch-View war auf beiden Loadern schlechter.
+- NeoForge wurde massiv schlechter in `sodium.process_quad`, `sodium.ctm` und
+  `ctm.resolve`.
+- Vermutlich ist die stabile immutable Result-Form fuer JIT und Apply-Pfad
+  guenstiger als die eingesparte Kopie. Der Code wurde revertiert.
+
 ## Accepted: Neighbor Rule Index 2026-06-17
 
 Status: **unit-, build- und benchmark-verifiziert.**
