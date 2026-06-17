@@ -15,13 +15,14 @@ import java.util.concurrent.atomic.LongAdder;
  * reports only.
  *
  * <p>Performance: HOT PATH. Allocation policy: no allocation while recording.
- * Recording is gated by the static {@code argus.benchmark} system property;
- * normal gameplay pays only a no-op branch after JIT inlining.
+ * Recording is gated by {@code argus.benchmark.ctmOverlayDiagnostics};
+ * normal gameplay and ordinary performance benchmarks pay only a no-op branch
+ * after JIT inlining.
  */
 public final class CtmOverlayDiagnostics {
 
     private static final boolean ENABLED =
-            Boolean.getBoolean("argus.benchmark");
+            Boolean.getBoolean("argus.benchmark.ctmOverlayDiagnostics");
     private static final LongAdder[] COUNTERS = createCounters();
 
     private CtmOverlayDiagnostics() {

@@ -28,12 +28,16 @@ import java.util.concurrent.atomic.LongAdder;
  * <p>Threading: Sodium section-build workers may record concurrently. Entries
  * are immutable except for call counters.
  *
- * <p>Performance: gated by {@link ArgusBenchmark#enabled()}. Allocation is
- * accepted only for explicit dev benchmark runs.
+ * <p>Performance: gated by {@code argus.benchmark.ctmCandidateAnalysis}.
+ * Allocation is accepted only for explicit CTM analysis runs. Normal
+ * performance benchmarks keep this disabled so the report measures the
+ * production CTM hot path instead of the analysis machinery.
  */
 public final class CtmCandidateAnalysis {
 
     private static final int DEFAULT_LIMIT = 24;
+    private static final boolean ENABLED =
+            Boolean.getBoolean("argus.benchmark.ctmCandidateAnalysis");
     private static final ConcurrentMap<String, Entry> ENTRIES =
             new ConcurrentHashMap<>();
 
@@ -44,6 +48,9 @@ public final class CtmCandidateAnalysis {
      * Clears candidate analysis counters for a new measured benchmark window.
      */
     public static void reset() {
+        if (!ENABLED) {
+            return;
+        }
         ENTRIES.clear();
     }
 
@@ -55,8 +62,7 @@ public final class CtmCandidateAnalysis {
                               int face,
                               CtmCandidateScratch candidates,
                               boolean resolvedWork) {
-        if (!ArgusBenchmark.enabled() || candidates == null
-                || !candidates.hasWork()) {
+        if (!ENABLED || candidates == null || !candidates.hasWork()) {
             return;
         }
         String key = key(blockId, baseSprite, face,
@@ -83,7 +89,7 @@ public final class CtmCandidateAnalysis {
      * Returns the most frequently used candidate sets.
      */
     public static Snapshot[] topSnapshots(int limit) {
-        if (limit <= 0 || ENTRIES.isEmpty()) {
+        if (!ENABLED || limit <= 0 || ENTRIES.isEmpty()) {
             return new Snapshot[0];
         }
         ArrayList<Snapshot> snapshots = new ArrayList<>(ENTRIES.size());
