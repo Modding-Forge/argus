@@ -139,10 +139,12 @@ public final class CtmRuleSet {
             Map<String, List<CtmRule>> finalByBlock = new HashMap<>();
             mutableByBlock.forEach((k, v) -> finalByBlock.put(
                     k, Collections.unmodifiableList(v)));
-            Map<NamespaceId, CtmRule[][]> spriteCandidates = new HashMap<>();
+            Map<NamespaceId, CtmRenderIndex.FaceCandidates[]> spriteCandidates =
+                    new HashMap<>();
             mutableBySprite.forEach((k, v) -> spriteCandidates.put(
                     k, CtmRenderIndex.byFace(v)));
-            Map<String, CtmRule[][]> blockCandidates = new HashMap<>();
+            Map<String, CtmRenderIndex.FaceCandidates[]> blockCandidates =
+                    new HashMap<>();
             mutableByBlock.forEach((k, v) -> blockCandidates.put(
                     k, CtmRenderIndex.byFace(v)));
             return new CtmRuleSet(

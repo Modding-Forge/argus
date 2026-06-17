@@ -294,6 +294,29 @@ class CtmRenderResolverTest {
         assertEquals(sand, plan.overlays().get(3).rule());
     }
 
+    @Test
+    void resolvePlan_largeOverlayCandidateSetKeepsMatchingRule() {
+        CtmRule sand = overlayRule("sand", "z_sand.properties");
+        CtmRuleSet.Builder builder = new CtmRuleSet.Builder();
+        for (int i = 0; i < 40; i++) {
+            builder.add(overlayRule("unused_" + i,
+                    String.format("a_%02d_unused.properties", i)));
+        }
+        builder.add(sand);
+        CtmRegistry registry = new CtmRegistry("test");
+        registry.replace(builder.build());
+
+        CtmRenderPlan plan = new CtmRenderResolver(registry)
+                .resolvePlan("minecraft:dirt",
+                        new NamespaceId("minecraft", "block/dirt"),
+                        new OverlayView(), 0, 64, 0, Faces.UP);
+
+        assertNotNull(plan);
+        assertFalse(plan.hasReplacement());
+        assertTrue(plan.hasOverlays());
+        assertEquals(sand, plan.overlays().getFirst().rule());
+    }
+
     private static CtmRule rule(CtmMethod method, int tileCount,
                                 boolean matchTile, boolean matchBlock,
                                 int weight) {

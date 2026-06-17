@@ -126,13 +126,15 @@ public final class CtmRenderResolver {
             return false;
         }
         CtmRule[] spriteRules = candidates.spriteRules();
-        CtmRule[] blockRules = candidates.blockRules();
+        CtmRule[] blockRules = candidates.blockRules(view, face);
+        int blockRuleCount = candidates.blockRuleCount();
 
         try {
             selector.beginResolve(view, face);
             CtmRenderSelection selection = collectFromRules(
                     selector,
                     spriteRules,
+                    spriteRules.length,
                     view, x, y, z, face, baseSprite, out);
             if (selection != null) {
                 out.setReplacement(selection);
@@ -141,6 +143,7 @@ public final class CtmRenderResolver {
             selection = collectFromRules(
                     selector,
                     blockRules,
+                    blockRuleCount,
                     view, x, y, z, face, baseSprite, out);
             if (selection != null) {
                 out.setReplacement(selection);
@@ -175,12 +178,14 @@ public final class CtmRenderResolver {
     private static CtmRenderSelection collectFromRules(
             CtmSelector selector,
             CtmRule[] rules,
+            int ruleCount,
             NeighborView view,
             int x, int y, int z,
             int face,
             NamespaceId baseSprite,
             CtmRenderScratch out) {
-        for (CtmRule rule : rules) {
+        for (int i = 0; i < ruleCount; i++) {
+            CtmRule rule = rules[i];
             if (rule.runtimeProfile().isOverlay()) {
                 if (!selector.maySelectConnectedOverlay(rule, view, face)) {
                     continue;

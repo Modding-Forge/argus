@@ -22,17 +22,30 @@ public final class CtmCandidateScratch {
 
     private CtmRule[] spriteRules = CtmRenderIndex.noRules();
     private CtmRule[] blockRules = CtmRenderIndex.noRules();
+    private CtmNeighborRuleIndex blockNeighborIndex;
+    private CtmRule[] filteredBlockRules = CtmRenderIndex.noRules();
+    private long[] neighborRuleMask = new long[0];
+    private int blockRuleCount;
     private int workFlags;
 
     public void clear() {
         spriteRules = CtmRenderIndex.noRules();
         blockRules = CtmRenderIndex.noRules();
+        blockNeighborIndex = null;
+        filteredBlockRules = CtmRenderIndex.noRules();
+        blockRuleCount = 0;
         workFlags = NO_WORK;
     }
 
-    void set(CtmRule[] spriteRules, CtmRule[] blockRules, int workFlags) {
+    void set(CtmRule[] spriteRules,
+             CtmRule[] blockRules,
+             CtmNeighborRuleIndex blockNeighborIndex,
+             int workFlags) {
         this.spriteRules = spriteRules;
         this.blockRules = blockRules;
+        this.blockNeighborIndex = blockNeighborIndex;
+        this.filteredBlockRules = CtmRenderIndex.noRules();
+        this.blockRuleCount = blockRules.length;
         this.workFlags = workFlags;
     }
 
@@ -42,6 +55,18 @@ public final class CtmCandidateScratch {
 
     public CtmRule[] blockRules() {
         return blockRules;
+    }
+
+    CtmRule[] blockRules(NeighborView view, int face) {
+        if (blockNeighborIndex == null || view == null) {
+            blockRuleCount = blockRules.length;
+            return blockRules;
+        }
+        return blockNeighborIndex.filter(view, face, this);
+    }
+
+    int blockRuleCount() {
+        return blockRuleCount;
     }
 
     public int workFlags() {
@@ -58,5 +83,34 @@ public final class CtmCandidateScratch {
 
     public boolean hasOverlays() {
         return (workFlags & OVERLAY_ONLY) != 0;
+    }
+
+    long[] neighborRuleMask(int wordCount) {
+        if (neighborRuleMask.length < wordCount) {
+            neighborRuleMask = new long[wordCount];
+        } else {
+            java.util.Arrays.fill(neighborRuleMask, 0, wordCount, 0L);
+        }
+        return neighborRuleMask;
+    }
+
+    CtmRule[] materializeNeighborRules(CtmRule[] rules, long[] mask) {
+        if (filteredBlockRules.length < rules.length) {
+            filteredBlockRules = new CtmRule[rules.length];
+        }
+        int out = 0;
+        for (int wordIndex = 0; wordIndex < mask.length; wordIndex++) {
+            long word = mask[wordIndex];
+            while (word != 0L) {
+                int bit = Long.numberOfTrailingZeros(word);
+                int ruleIndex = (wordIndex << 6) + bit;
+                if (ruleIndex < rules.length) {
+                    filteredBlockRules[out++] = rules[ruleIndex];
+                }
+                word &= word - 1L;
+            }
+        }
+        blockRuleCount = out;
+        return out == rules.length ? rules : filteredBlockRules;
     }
 }
